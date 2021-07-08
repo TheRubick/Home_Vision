@@ -10,6 +10,9 @@ fgbg4 = cv2.bgsegm.createBackgroundSubtractorMOG(history=1000)
 
 # capture frames from a camera  
 cap = cv2.VideoCapture(0)
+cap.set(3,840)
+cap.set(4,640)
+
 while(1):
     # read frames
     ret, img = cap.read()
@@ -31,7 +34,7 @@ while(1):
     #cv2.imshow('GMG', fgmask3)
     cv2.imshow('MOG', fgmask4)
     k = cv2.waitKey(30) & 0xff
-    
+
     if k == 27:
         fps = cap.get(cv2.CAP_PROP_FPS)
         print("fps = ",fps)
