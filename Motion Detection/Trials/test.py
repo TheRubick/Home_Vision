@@ -14,6 +14,7 @@ while(1):
     # read frames
     ret, img = cap.read()
 
+    
     #Gray conversion and noise reduction (smoothening)
     gray_frame=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     gray_frame=cv2.GaussianBlur(gray_frame,(25,25),0)
@@ -23,7 +24,6 @@ while(1):
     fgmask2 = fgbg2.apply(gray_frame)
     #fgmask3 = fgbg3.apply(gray_frame)
     fgmask4 = fgbg4.apply(gray_frame)
-    fgbg2.set
       
     cv2.imshow('Original', gray_frame)
     #cv2.imshow('KNN', fgmask1)
@@ -31,7 +31,10 @@ while(1):
     #cv2.imshow('GMG', fgmask3)
     cv2.imshow('MOG', fgmask4)
     k = cv2.waitKey(30) & 0xff
+    
     if k == 27:
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        print("fps = ",fps)
         break
   
 cap.release()
