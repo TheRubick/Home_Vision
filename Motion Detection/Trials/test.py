@@ -44,6 +44,8 @@ while(1):
     if k == 27:
         fps = cap.get(cv2.CAP_PROP_FPS)
         print("fps = ",fps)
+        print("width = ",cap.get(3))
+        print("height = ",cap.get(4))
         break
   
 cap.release()

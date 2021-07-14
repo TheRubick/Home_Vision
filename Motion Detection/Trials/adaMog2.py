@@ -1,7 +1,8 @@
 # importing libraries
 import numpy as np
 import cv2
-  
+
+from benchmarkUtils import Mog2MotionDetector
 
 def skipFrame(frames, cap):
     totalFrames = getFPS(cap)
@@ -11,43 +12,55 @@ def skipFrame(frames, cap):
 def getFPS(cap):
     return cap.get(cv2.CAP_PROP_FPS)
 
-def getNonZeroCount(frame,threshold = 10000):
+def getNonZeroCount(frame,cap,threshold = 95):
     nonZeroCount = np.count_nonzero(frame)
-    threshold = cap.get(3) * cap.get(4) / 100
-    return (nonZeroCount > threshold)
+    min_threshold = (cap.get(3) * cap.get(4) / 100) * threshold
+    nb_pixels = cap.get(3) * cap.get(4)
+    nb = nb_pixels - nonZeroCount
+    return not(nb > min_threshold)
     
 
 def frameVote(frameChecker, frameNumber):
-    return (np.count_nonzero(frameChecker) > frameNumber //2 )
+    return (np.count_nonzero(frameChecker) > frameNumber // 2)
 
 frameNumber = 9
 frameChecker = np.zeros(frameNumber)
 frameIdx = 0
-textColor = (255, 255, 255)
+textColor = (255, 0,0)
 textPosition = (100, 100)
 # creating object
-fgbg = cv2.createBackgroundSubtractorMOG2(history=120,detectShadows=True)
+fgbg = cv2.createBackgroundSubtractorMOG2(history=1000,detectShadows=True)
 
 # capture frames from a camera
 cap = cv2.VideoCapture(0)
-
+#cap.set(cv2.CAP_PROP_FRAME_WIDTH, 900)
+#cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 900)
 
 fps = getFPS(cap)
 print("fps = ",fps)
 count = 0
+#outputVideo = cv2.VideoWriter('output.avi',cv2.VideoWriter_fourcc(*'XVID'), 20.0, (50,50))
+
+outputVideo = cv2.VideoWriter('testCaseDummy.avi',
+                            cv2.VideoWriter_fourcc('M','J','P','G'), 
+                            fps=20, 
+                            frameSize=(int(cap.get(3)),int(cap.get(4))))
+
+
+
+
+my_mog2_detector = Mog2MotionDetector()
 
 while(1):
     # read frames
     ret, img = cap.read()
 
-    
-   
-        
+
     #Gray conversion and noise reduction (smoothening)
     gray_frame=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     gray_frame=cv2.GaussianBlur(gray_frame,(25,25),0)
         
-    
+    outputVideo.write(img)
     fgmask = fgbg.apply(gray_frame)
 
 
@@ -56,14 +69,13 @@ while(1):
         frameChecker[frameIdx] = getNonZeroCount(fgmask,cap)
 
         if(frameVote(frameChecker, frameNumber)):
-            cv2.putText(fgmask, 'Someones stealing your honey', textPosition
+            cv2.putText(img, 'motion detected', textPosition
             , cv2.FONT_HERSHEY_SIMPLEX, .5, textColor, 2, cv2.LINE_AA)
     
         frameIdx += 1
         frameIdx %= frameNumber
 
         print(frameChecker)
-        print(fgbg.getNMixtures())
 
 
 
@@ -74,8 +86,22 @@ while(1):
     k = cv2.waitKey(30) & 0xff
     if k == 27:
         break
-  
+
+
+'''
+
+MOG2 OPENCV Functions
+
+'''
+print("background ratio = ",fgbg.getBackgroundRatio())
+print("Cthr = ",fgbg.getVarThreshold()) #related to the Cthr
+print("var init = ",fgbg.getVarInit())
+print("var max = ",fgbg.getVarMax())
+fgbg.setVarThresholdGen(9)
+print("var threshold generation = ",fgbg.getVarThresholdGen())
+
 cap.release()
+outputVideo.release()
 cv2.destroyAllWindows()
 
 
