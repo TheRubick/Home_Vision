@@ -24,10 +24,10 @@
 <script >
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
 import { defineComponent } from 'vue';
-//import axios from 'axios';
+import axios from 'axios';
 
 //const path = "http://192.168.1.109:5000/test";
-//const path = "/test";
+const path = "/test";
 export default defineComponent({
   name: 'Home',
   components: {
@@ -44,15 +44,14 @@ export default defineComponent({
       
     }
   },
-  /*created(){
-    //axios.get('https://jsonplaceholder.typicode.com/todos?_limit=5')
-    /*axios.get(this.$hostName+path)
+  created(){
+    axios.get(this.$hostName+path)
       .then(
         res => {this.data = res.data.res;
         console.log(this.data)
         })
       .catch(err => console.log(err));
-  }*/
+  }
 });
 </script>
 

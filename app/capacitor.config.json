@@ -1,7 +1,14 @@
 {
   "appId": "com.homevision.v1",
   "appName": "Home Vision",
-  "webDir": "public",
   "bundledWebRuntime": false,
-  "linuxAndroidStudioPath": "/opt/android-studio/bin/studio.sh"
+  "npmClient": "npm",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  },
+  "linuxAndroidStudioPath": "/snap/android-studio/113/android-studio/bin/studio.sh",
+  "cordova": {}
 }
