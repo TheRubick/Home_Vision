@@ -1,0 +1,5 @@
+flask run --host=0.0.0.0
+
+ionic build
+npx cap copy
+npx cap open android

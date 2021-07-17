@@ -1,0 +1,7 @@
+{
+  "name": "Home Vision",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue"
+}

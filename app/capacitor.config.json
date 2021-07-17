@@ -1,0 +1,7 @@
+{
+  "appId": "com.homevision.v1",
+  "appName": "Home Vision",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "linuxAndroidStudioPath": "/opt/android-studio/bin/studio.sh"
+}
