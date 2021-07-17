@@ -1,3 +1,36 @@
 Motion Detection/Trials/benchmarks/*.avi
 Motion Detection/Trials/benchmarks/*.zip
 Motion Detection/Trials/__pycache__/
+
+# Specifies intentionally untracked files to ignore when using Git
+# http://git-scm.com/docs/gitignore
+
+app/*~
+app/*.sw[mnpcod]
+app/.tmp
+app/*.tmp
+app/*.tmp.*
+app/*.sublime-project
+app/*.sublime-workspace
+app/.DS_Store
+app/Thumbs.db
+app/UserInterfaceState.xcuserstate
+app/$RECYCLE.BIN/
+
+app/*.log
+app/log.txt
+app/npm-debug.log*
+
+app/.idea
+app/.ionic
+app/.sass-cache
+app/.sourcemaps
+app/.versions
+app/.vscode
+app/android
+app/coverage
+app/dist
+app/node_modules
+app/platforms
+app/plugins
+app/www
