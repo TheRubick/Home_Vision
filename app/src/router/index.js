@@ -5,12 +5,19 @@ import Settings from '../views/Settings.vue';
 import FindObject from '../views/FindObject.vue';
 import Help from '../views/Help.vue';
 import LiveStream from '../views/LiveStream.vue';
+import TrackObject from '../views/TrackObject.vue';
+import Start from '../views/Start.vue';
 
 
 const routes = [
   {
     path: '/',
     redirect: '/home'
+  },
+  {
+    path: '/start',
+    name: 'Start',
+    component: Start
   },
   {
     path: '/home',
@@ -41,6 +48,11 @@ const routes = [
     path: '/home/help',
     name: 'Help',
     component: Help
+  },
+  {
+    path: '/home/trackobject',
+    name: 'Track Object',
+    component: TrackObject
   }
 ]
 

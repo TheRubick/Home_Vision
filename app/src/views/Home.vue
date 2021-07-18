@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
-        <ion-title >Home Page </ion-title>
+        <ion-title >Home Vision </ion-title>
       </ion-toolbar>
     </ion-header>
     
@@ -10,11 +10,11 @@
         <img src="./logo.png"/>
           <ion-grid>
               <ion-row >
-                <ion-col>
+                <ion-col size="6">
                   <ion-button expand="block" size="large" fill="outline" shape="round" 
                   color="secondary" href="/home/livestream">Live Stream</ion-button>
                 </ion-col>
-                <ion-col>
+                <ion-col size="6">
                   <ion-button expand="block" size="large" color="secondary" fill="outline" shape="round" 
                   href="/home/findobject">Find object</ion-button>
                 </ion-col>
@@ -30,15 +30,13 @@
                 </ion-col>
               </ion-row>
               <ion-row >
-              <ion-col size="3">
-                  
+                <ion-col size="6">
+                  <ion-button expand="block" size="large" color="secondary" fill="outline" shape="round"
+                  href="/home/trackobject">Track Object</ion-button>
                 </ion-col>
-                <ion-col>
+                <ion-col size="6">
                   <ion-button expand="block" size="large" fill="outline" shape="round" color="secondary"
                   href="/home/help">help</ion-button>
-                </ion-col>
-                <ion-col size="3">
-                  
                 </ion-col>
               </ion-row>
           </ion-grid>
@@ -48,12 +46,12 @@
 
 <script >
 import {IonContent, IonHeader, IonPage, IonTitle,
-     IonToolbar,IonCol, IonGrid, IonRow} from '@ionic/vue';
+     IonToolbar,IonCol, IonGrid, IonRow,IonButton} from '@ionic/vue';
 import { defineComponent } from 'vue';
-import axios from 'axios';
+//import axios from 'axios';
 import { useRouter } from 'vue-router';
 //const path = "http://192.168.1.109:5000/test";
-const path = "/test";
+//const path = "/test";
 
 export default defineComponent({
   name: 'Home',
@@ -65,7 +63,8 @@ export default defineComponent({
     IonToolbar,
     IonCol,
     IonGrid,
-    IonRow 
+    IonRow,
+    IonButton
   },
   data(){
     return {
@@ -74,14 +73,7 @@ export default defineComponent({
       temp:null
     }
   },
-  created(){
-    axios.get(this.$hostName+path)
-      .then(
-        res => {this.data = res.data.res;
-        console.log(this.data)
-        })
-      .catch(err => console.log(err));
-  },
+
   methods: {
     liveStream(){
       this.$router.push({name:'LiveStream'});

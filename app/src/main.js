@@ -27,8 +27,11 @@ const app = createApp(App)
   .use(IonicVue)
   .use(router);
 
-  app.config.globalProperties.$hostName = "http://192.168.1.108:5000";
-  //app.config.globalProperties.$hostName = "http://127.0.0.1:5000";
+  //app.config.globalProperties.$hostName = "http://192.168.1.108:5000";
+  app.config.globalProperties.$hostName = "http://127.0.0.1:5000";
+  app.config.globalProperties.$changeHostName = function(ip) {
+    app.config.globalProperties.$hostName = "http://"+ip+":5000";
+  }
 
 router.isReady().then(() => {
   app.mount('#app');

@@ -42,3 +42,36 @@ def video_feed():
     global feed 
     feed = True
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/find_object')
+def find_object():
+    camera = cv2.VideoCapture(1)
+    
+    success, frame = camera.read()  # read the camera frame
+    image = cv2.imread('404-error.jpg',cv2.IMREAD_COLOR)
+    camera.release()
+    frame = image
+    ret, buffer = cv2.imencode('.jpg', frame)
+    frame = buffer.tobytes()
+    var = b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
+    return Response(var, mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/track_object')
+def track_object():
+    image = cv2.imread('404-error.jpg',cv2.IMREAD_COLOR)
+    frame = image
+    ret, buffer = cv2.imencode('.jpg', frame)
+    frame = buffer.tobytes()
+    var = b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
+    return Response(var, mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/track_coords',methods=['POST'])
+def take_track_coords():
+    coords = request.get_json()
+    print(coords)
+    x1 = coords.get('x1')
+    y1 = coords.get('y1')
+    x2 = coords.get('x2')
+    y2 = coords.get('y2')
+    response = {'res':"success"}
+    return jsonify(response)
