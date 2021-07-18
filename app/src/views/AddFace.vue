@@ -18,7 +18,7 @@
         <ion-text v-show="!show_name_items" color="secondary">
           <h5>Stand in front of the camera and make sure your face is centered to the camera.
           </h5>
-        
+        </ion-text>
 
         <img v-if="showImg && first" v-bind:src="backend_path+'/take_photo'"/>
         <img v-if="showImg && second" v-bind:src="backend_path+'/take_photo2'"/>
@@ -33,13 +33,15 @@
                  color="secondary" @click="takePhoto()">take photo ({{counter}})</ion-button>
               <ion-button v-show="!returnHome && !disableCancel"  size="large" fill="outline" shape="round" 
                      color="secondary" @click="cancel()" href="/home/addface">cancel</ion-button>  
-              <ion-button v-show="returnHome"  size="large" fill="outline" shape="round" 
-                      color="secondary" href="/home">Go home</ion-button>          
+                        
           </ion-col>
         </ion-row >
         
+          <ion-button v-show="returnHome" expand="block"  size="large" fill="outline" shape="round" 
+                      color="secondary" href="/home">Go home</ion-button> 
         
-        </ion-text>
+        
+        
     </ion-content>
   </ion-page>
 </template>

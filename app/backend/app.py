@@ -11,7 +11,7 @@ CORS(app, support_credentials=True)
 
 
 def gen_frames():
-    camera = cv2.VideoCapture(0)  
+    camera = cv2.VideoCapture(1)  
     while feed:
         success, frame = camera.read()  # read the camera frame
         if not success:
@@ -81,7 +81,7 @@ person_name=''
 @app.route('/take_photo',methods=['GET'])
 def take_photo():
     print("in take photo")
-    camera = cv2.VideoCapture(0)
+    camera = cv2.VideoCapture(1)
     success, frame = camera.read()  # read the camera frame
     camera.release()
     global person_faces
@@ -95,7 +95,7 @@ def take_photo():
 @app.route('/take_photo2',methods=['GET'])
 def take_photo2():
     print("in take photo")
-    camera = cv2.VideoCapture(0)
+    camera = cv2.VideoCapture(1)
     success, frame = camera.read()  # read the camera frame
     camera.release()
     global person_faces
@@ -109,7 +109,7 @@ def take_photo2():
 @app.route('/take_photo3',methods=['GET'])
 def take_photo3():
     print("in take photo")
-    camera = cv2.VideoCapture(0)
+    camera = cv2.VideoCapture(1)
     success, frame = camera.read()  # read the camera frame
     camera.release()
     global person_faces
@@ -123,7 +123,7 @@ def take_photo3():
 @app.route('/take_photo4',methods=['GET'])
 def take_photo4():
     print("in take photo")
-    camera = cv2.VideoCapture(0)
+    camera = cv2.VideoCapture(1)
     success, frame = camera.read()  # read the camera frame
     camera.release()
     global person_faces
@@ -137,7 +137,7 @@ def take_photo4():
 @app.route('/take_photo5',methods=['GET'])
 def take_photo5():
     print("in take photo")
-    camera = cv2.VideoCapture(0)
+    camera = cv2.VideoCapture(1)
     success, frame = camera.read()  # read the camera frame
     camera.release()
     global person_faces
@@ -151,7 +151,7 @@ def take_photo5():
 @app.route('/take_photo6',methods=['GET'])
 def take_photo6():
     print("in take photo")
-    camera = cv2.VideoCapture(0)
+    camera = cv2.VideoCapture(1)
     success, frame = camera.read()  # read the camera frame
     camera.release()
     global person_faces
