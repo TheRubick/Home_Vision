@@ -34,3 +34,7 @@ app/node_modules
 app/platforms
 app/plugins
 app/www
+
+*.weights
+
+*.jpg

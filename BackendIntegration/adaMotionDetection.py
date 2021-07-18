@@ -2,7 +2,7 @@
 import numpy as np
 import cv2
 
-from benchmarkUtils import Mog2MotionDetector
+from motionDetection import Mog2MotionDetector
 
 def skipFrame(frames, cap):
     totalFrames = getFPS(cap)
@@ -93,7 +93,7 @@ outputVideo.release()
 cv2.destroyAllWindows()
 
 
- 
+
         # # Finding contour of moving object
         # cnts,_ = cv2.findContours(fgmask.copy(), 
         #                    cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

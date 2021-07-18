@@ -15,12 +15,12 @@
 
 import numpy as np
 import cv2
-from benchmarkUtils import DiffMotionDetector
-from benchmarkUtils import MogMotionDetector
-from benchmarkUtils import Mog2MotionDetector
+from motionDetection import DiffMotionDetector
+from motionDetection import MogMotionDetector
+from motionDetection import Mog2MotionDetector
 
 #Open the video file and loading the background image
-video_capture = cv2.VideoCapture("testCase3.avi")
+video_capture = cv2.VideoCapture(0)
 
 ret,background_image = video_capture.read()#cv2.imread("background.png")
 
@@ -71,7 +71,7 @@ while(True):
     # for the exit command
     if(frame is None): break #check for empty frames
     cv2.imshow('Original', frame) #show on window
-    cv2.imshow('Diff', diff_mask) #show on window
+    #cv2.imshow('Diff', diff_mask) #show on window
     #cv2.imshow('MOG', mog_mask) #show on window
     cv2.imshow('MOG 2', mog2_mask) #show on window
     if cv2.waitKey(1) & 0xFF == ord('q'): break #Exit when Q is pressed
