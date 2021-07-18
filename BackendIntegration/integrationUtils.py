@@ -3,43 +3,45 @@ from adaMotionClass import motionDetector
 from time import time
 import kcftracker
 from adaMotionClass import motionDetector
+import pickle
 
-def motionDetectorProcess(motionObj,fgbg,count,frame,fps,windowSize,frameIdx,motionProcessQueue):
+def motionDetectorProcess(motionObj,fps,windowSize,motionProcessQueueOne,):
     """
     This is a function which will be invoke the motion detector
     """
-    #Gray conversion and noise reduction (smoothening)
-    gray_frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-    gray_frame=cv2.GaussianBlur(gray_frame,(25,25),0)
+    while True:
+        #Gray conversion and noise reduction (smoothening)
+        frame = motionProcessQueueOne.get()
+        gray_frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+        gray_frame=cv2.GaussianBlur(gray_frame,(25,25),0)
+                    
+        fgmask = motionObj.fgbg.apply(gray_frame)
+
+
+        if  motionObj.count % 3 == 0:
+            motionObj.frameChecker[motionObj.frameIdx] = motionObj.getNonZeroCount(fgmask,windowSize)
+
+            if(motionObj.frameVote(motionObj.frameChecker)):
+                textColor = (255, 0,0)
+                textPosition = (100, 100)
                 
-    fgmask = fgbg.apply(gray_frame)
+                #@cv2.putText(frame, 'motion detected', textPosition
+                    #, cv2.FONT_HERSHEY_SIMPLEX, .5, textColor, 2, cv2.LINE_AA)
+                
+                motionObj.frameIdx += 1
+                motionObj.frameIdx %= motionObj.frameNumber
 
+                print(motionObj.frameChecker)
 
-    if  count % 3 == 0:
-        motionObj.frameChecker[frameIdx] = motionObj.getNonZeroCount(fgmask,windowSize)
+            motionObj.count += 1
+            motionObj.count %= fps-1
+        print(gray_frame)
+        cv2.imshow("gray mask",fgmask)
+        cv2.waitKey(1)
 
-        if(motionObj.frameVote(motionObj.frameChecker)):
-            textColor = (255, 0,0)
-            textPosition = (100, 100)
-            
-            #@cv2.putText(frame, 'motion detected', textPosition
-                #, cv2.FONT_HERSHEY_SIMPLEX, .5, textColor, 2, cv2.LINE_AA)
-            
-            frameIdx += 1
-            frameIdx %= motionObj.frameNumber
-
-            print(motionObj.frameChecker)
-
-        count += 1
-        count %= fps-1
-    motionProcessQueue.put(motionObj)
-    motionProcessQueue.put(count)
-    motionProcessQueue.put(frameIdx)
-    #for debugging purposes
-    motionProcessQueue.put(fgmask)
-
-def draw_boundingbox(event, x, y, selectingObject, initTracking, onTracking, ix, iy, cx, cy, w, h):
-
+    
+def draw_boundingbox(event, x, y,flags,param):
+    
     if event == cv2.EVENT_LBUTTONDOWN:
         selectingObject = True
         onTracking = False
@@ -63,10 +65,10 @@ def draw_boundingbox(event, x, y, selectingObject, initTracking, onTracking, ix,
         if(w > 0):
             ix, iy = x - w / 2, y - h / 2
             initTracking = True
-    return selectingObject, initTracking, onTracking, ix, iy, cx, cy, w, h
 
-
-def objectTrackerProcess():
+global selectingObject,initTracking,onTracking,ix, iy, cx, cy,w, h
+def objectTrackerProcess(trackerProcessQueue):
+    
     selectingObject = False
     initTracking = False
     onTracking = False
@@ -75,19 +77,14 @@ def objectTrackerProcess():
 
     inteval = 1
     duration = 0.01
-
-    cap = cv2.VideoCapture(0)
     tracker = kcftracker.KCFTracker(True, True, True)  # hog, fixed_window, multiscale
     # if you use hog feature, there will be a short pause after you draw a first boundingbox, that is due to the use of Numba.
 
     cv2.namedWindow('tracking')
-    selectingObject, initTracking, onTracking, ix, iy, cx, cy, w, h = cv2.setMouseCallback('tracking', draw_boundingbox)
+    cv2.setMouseCallback('tracking', draw_boundingbox)
 
-    while(cap.isOpened()):
-        ret, frame = cap.read()
-        if not ret:
-            break
-
+    while True:
+        frame = trackerProcessQueue.get()
         if(selectingObject):
             cv2.rectangle(frame, (ix, iy), (cx, cy), (0, 255, 255), 7)
         elif(initTracking):
@@ -111,9 +108,4 @@ def objectTrackerProcess():
             cv2.putText(frame, 'FPS: ' + str(1 / duration)[:4].strip('.'), (8, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
         cv2.imshow('tracking', frame)
-        c = cv2.waitKey(inteval) & 0xFF
-        if c == 27 or c == ord('q'):
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
+        cv2.waitKey(inteval)

@@ -1,3 +1,4 @@
+import pickle
 class dummyClass():
     def __init__(self):
         self.name = "Muhammad"
@@ -9,5 +10,5 @@ def setName(dumObj,name,x,que):
     dumObj.name = name
     print(dumObj.name)
     x = 99
-    que.put(dumObj)
+    que.put(pickle.dumps(dumObj))
     que.put(x)

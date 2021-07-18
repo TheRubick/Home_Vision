@@ -8,6 +8,10 @@ class motionDetector:
     def __init__(self,frameNumber=9,history=500):
         self.frameNumber = frameNumber
         self.frameChecker = np.zeros(self.frameNumber)
+        self.fgbg = cv2.createBackgroundSubtractorMOG2(history=1000,detectShadows=True)
+        self.frameIdx = 0
+        self.count = 0
+    
 
     def skipFrame(self, frames, cap):
         totalFrames = self.getFPS(cap)

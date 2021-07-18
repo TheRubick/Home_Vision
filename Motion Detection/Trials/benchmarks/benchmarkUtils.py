@@ -60,7 +60,10 @@ class DiffMotionDetector:
             return None
         foreground_gray = cv2.cvtColor(foreground_image, cv2.COLOR_BGR2GRAY)
         delta_image = cv2.absdiff(self.background_gray, foreground_gray)
-        threshold_image = cv2.threshold(delta_image, threshold, 255, cv2.THRESH_BINARY)[1]
+        kernel = np.ones((5,5),np.uint8)
+        opening = cv2.morphologyEx(delta_image, cv2.MORPH_OPEN, kernel)
+        threshold_image = cv2.threshold(opening, threshold, 255, cv2.THRESH_BINARY)[1]
+
         return threshold_image
 
 

@@ -20,7 +20,7 @@ from benchmarkUtils import MogMotionDetector
 from benchmarkUtils import Mog2MotionDetector
 
 #Open the video file and loading the background image
-video_capture = cv2.VideoCapture("testCase2.avi")
+video_capture = cv2.VideoCapture("testCase3.avi")
 
 ret,background_image = video_capture.read()#cv2.imread("background.png")
 
@@ -72,7 +72,7 @@ while(True):
     if(frame is None): break #check for empty frames
     cv2.imshow('Original', frame) #show on window
     cv2.imshow('Diff', diff_mask) #show on window
-    cv2.imshow('MOG', mog_mask) #show on window
+    #cv2.imshow('MOG', mog_mask) #show on window
     cv2.imshow('MOG 2', mog2_mask) #show on window
     if cv2.waitKey(1) & 0xFF == ord('q'): break #Exit when Q is pressed
 

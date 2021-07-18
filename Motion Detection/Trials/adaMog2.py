@@ -88,18 +88,6 @@ while(1):
         break
 
 
-'''
-
-MOG2 OPENCV Functions
-
-'''
-print("background ratio = ",fgbg.getBackgroundRatio())
-print("Cthr = ",fgbg.getVarThreshold()) #related to the Cthr
-print("var init = ",fgbg.getVarInit())
-print("var max = ",fgbg.getVarMax())
-fgbg.setVarThresholdGen(9)
-print("var threshold generation = ",fgbg.getVarThresholdGen())
-
 cap.release()
 outputVideo.release()
 cv2.destroyAllWindows()
