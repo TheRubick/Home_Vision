@@ -54,6 +54,7 @@ import axios from 'axios';
 import { useRouter } from 'vue-router';
 //const path = "http://192.168.1.109:5000/test";
 const path = "/test";
+
 export default defineComponent({
   name: 'Home',
   components: {
@@ -69,7 +70,8 @@ export default defineComponent({
   data(){
     return {
       todos:[],
-      data:"no data"
+      data:"no data",
+      temp:null
     }
   },
   created(){

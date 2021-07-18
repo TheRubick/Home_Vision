@@ -5,22 +5,23 @@
       <ion-toolbar>
         
         <ion-buttons slot="start">
-        <ion-back-button text="HOME" default-href="/home"> </ion-back-button>
+        <ion-back-button text="HOME" default-href="/home" v-on:click="stop" > </ion-back-button>
         </ion-buttons>
         <ion-title >Live Stream </ion-title>
       </ion-toolbar>
     </ion-header>
     
     <ion-content>
-        <img src="{{ url_for('http://127.0.0.1:5000/video_feed') }}"/>
+        <img v-bind:src="backend_path+'/video_feed'"/>
     </ion-content>
   </ion-page>
 </template>
 <script>
 import {IonButtons, IonBackButton, IonContent, IonHeader, IonPage, IonTitle,
      IonToolbar} from '@ionic/vue';
-const path = "/video_feed";
 import axios from 'axios';
+const stop_feed_path = "/stop_feed";
+
 export default {
   name: 'LiveStream',
   components: {
@@ -34,16 +35,20 @@ export default {
   },
   data(){
     return{
-      img:null
+      temp:null,
+      backend_path:this.$hostName
     }
   },
-    onCreate(){
-    axios.get(this.$hostName+path)
+  methods:{
+    stop(){
+      axios.get(this.$hostName+stop_feed_path)
       .then(
-        res => {this.img = res.data;
-        console.log(res)
+        res => {
+        this.temp = res ;
         })
       .catch(err => console.log(err));
-  },
+      this.$router.push({name:"Home"})
+    }
+  }
 }
 </script>
