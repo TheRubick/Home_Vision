@@ -1,34 +1,33 @@
 """
-class to make face detection
+class to detect different objects 
 
 """
+
 
 import numpy as np
 import time
 import cv2
 import os
 
-from numpy.lib.type_check import imag
-
-class Face_Detection:
+class Detect:
 
 
-    def __init__(self, yolo = "yolov4-tiny", conf = 0.3, thres = 0.5):
+    def __init__(self, yolo = "model", conf = 0.3, thres = 0.5):
 
         """
             initalize parameters of the detector
         """
+        
         self.yolo = yolo  # yolo folder contain weights and model 
 
         self.conf = conf  # responsible for elimanting predications have confidence less than this value
         self.thres = thres # to remove overlapping predication consider area of intersection between similar items
         self.LABELS = None # labels we have
         self.COLORS = None # color for each label
-
         self.found = False
         self.classes = None
         self.boxes = None
-
+       
         self.add_labels()
 
         self.net = self.load_model()
@@ -54,14 +53,14 @@ class Face_Detection:
 
         """
 
-        iteration = "final"
-        weights = "yolov4-tiny_{}.weights".format(iteration)
+        iteration = "2000"
+        weights = "yolov4-obj_{}.weights".format(iteration)
 
         modelsPath = "weights"
 
         # derive the paths to the YOLO weights and model configuration
         weightsPath = os.path.sep.join([self.yolo, os.path.join(modelsPath,weights)])
-        configPath = os.path.sep.join([self.yolo, "yolov4-tiny.cfg"])
+        configPath = os.path.sep.join([self.yolo, "yolov4-obj.cfg"])
 
 
         net = cv2.dnn.readNetFromDarknet(configPath, weightsPath)
@@ -138,6 +137,8 @@ class Face_Detection:
 
         if len(idxs) == 0:
             self.found = False
+            self.boxes = []
+            self.classes = []
             return
         else:
             self.found = True
@@ -148,12 +149,10 @@ class Face_Detection:
         self.boxes = [boxes[i] for i in objects]
         self.classes = np.take(classIDs, list(objects))
 
-    def draw_bounding_boxes(self, image, boxes = None ,classes = None ,show = False):
+    def draw_bounding_boxes(self, image, boxes ,classes ,show = False):
         """
         draw box around detected objects
         """
-        classes = self.classes
-        boxes = self.boxes
         for i in range(len(classes)):
             # extract the bounding box coordinates
             (x, y) = (boxes[i][0], boxes[i][1])
@@ -173,42 +172,23 @@ class Face_Detection:
         else:
             return image
 
-    def get_faces(self,image):
-        """
-        to cut faces from images 
-        """
-        imgs = []
-        print(image.shape)
-        for box in self.boxes:
-            part = image[box[1] : box[1] + box [3], box[0]: box[0] + box [2],:]
-            if len(part) == 0:
-                print("error")
-                continue
-            else:
-                imgs.append(part)
-
-        return imgs
 
 
 
-# obj = Face_Detection()
+
+
+
+
+# obj = Detect()
 
 
 # test = "test4"
 # imageName = "images/{}.jpg".format(test) 
 # image = cv2.imread(imageName)
-# obj.search_img(image)
+# boxes , classes = obj.search_img(image)
+# print(boxes)
+# print(classes)
 
-# if obj.found:
-#     print(obj.boxes)
-#     print(obj.classes)
-#     # obj.draw_bounding_boxes(image,show = True)
-#     imgs = obj.get_faces(image)
-   
-    
-#     for img in imgs:
-#         # print(img)
-#         cv2.imshow("Image", img)
-#         cv2.waitKey(0)
-# print(obj.draw_bounding_boxes(image, boxes ,classes))
+# obj.draw_bounding_boxes(image, boxes ,classes ,show = True)
+# # print(obj.draw_bounding_boxes(image, boxes ,classes))
 

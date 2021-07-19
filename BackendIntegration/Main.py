@@ -1,7 +1,10 @@
+from os import sendfile
 from adaMotionClass import motionDetector
 import multiprocessing
 from trackerProcess import objectTrackerProcess
 from motionProcess import motionDetectorProcess
+from detectionProcess import objectDetectionProcess
+
 import cv2
 import pickle
 import kcftracker
@@ -12,7 +15,19 @@ if __name__ == "__main__":
 
     ret,frame = cap.read()
     
+    # object detection
+    sentObj = False
+    detectionProcessQueue = multiprocessing.Queue()
+    mainDetectionProcessQueue = multiprocessing.Queue()
 
+    detectionProcess = multiprocessing.Process(target=objectDetectionProcess,args=(
+        detectionProcessQueue,mainDetectionProcessQueue,))
+
+    detectionProcess.start()
+
+
+    class_to_detect = 4  # set by back
+    detectOn = True    # set by back
 
     receiveTracker = True
     set_track = False
@@ -133,6 +148,31 @@ if __name__ == "__main__":
             
             cv2.imshow("Camera Feedback",frame)
 
+            #########################################
+            #         object detection              #
+            #########################################
+
+            if detectOn:
+                if not sentObj:
+                    mainDetectionProcessQueue.put({"frame":frame, "class":class_to_detect })
+                    sentObj = True
+                try:
+                    result = detectionProcessQueue.get_nowait()
+                    if "found" in result:
+                        sentObj = False
+                        if result["found"]:
+                            print("obj founded")
+                            # send to user obj location in scene
+                            cv2.imshow('detection', result["image"])
+                            cv2.waitKey(1)
+                        else:
+                            print("obj not founded")
+                            # send to user obj location in scene
+
+                except:
+                        pass
+                
+                
             
 
         if cv2.waitKey(1) == ord('q'):
@@ -141,6 +181,7 @@ if __name__ == "__main__":
     #motionProcess.join()
     trackerProcess.join()
     motionProcess.join()
+    detectionProcess.join()
     cap.release()
     cv2.destroyAllWindows()
     #integrationUtils.objectTrackerProcess()
