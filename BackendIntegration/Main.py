@@ -4,16 +4,31 @@ import multiprocessing
 from trackerProcess import objectTrackerProcess
 from motionProcess import motionDetectorProcess
 from detectionProcess import objectDetectionProcess
+from detect_RecognizeProcess import FaceDetectionProcess
+
 
 import cv2
-import pickle
-import kcftracker
 import time
 
 if __name__ == "__main__":
     cap = cv2.VideoCapture(0)
 
     ret,frame = cap.read()
+
+    # Face detection
+    
+
+    receiveFace = True
+    sentFace = False
+
+    faceProcessQueue = multiprocessing.Queue()
+    mainFaceProcessQueue = multiprocessing.Queue()
+
+    faceProcess = multiprocessing.Process(target=FaceDetectionProcess,args=(
+        faceProcessQueue,mainFaceProcessQueue))
+
+    faceProcess.start()
+
     
     # object detection
     sentObj = False
@@ -171,6 +186,33 @@ if __name__ == "__main__":
 
                 except:
                         pass
+
+                
+
+
+            #########################################
+            #         Face detection              #
+            #########################################
+
+            if receiveFace:
+                if not sentFace:
+                    mainFaceProcessQueue.put({"frame":frame})
+                    sentFace = True
+                try:
+                    result = faceProcessQueue.get_nowait()
+                    if "found" in result:
+                        sentFace = False
+                        if result["found"]:
+                            print("Face detected")
+                            # send to user obj location in scene
+                            cv2.imshow('detection', result["image"])
+                            cv2.waitKey(1)
+                        else:
+                            print("no Face founded")
+                            # send to user obj location in scene
+
+                except:
+                        pass
                 
                 
             
@@ -182,6 +224,7 @@ if __name__ == "__main__":
     trackerProcess.join()
     motionProcess.join()
     detectionProcess.join()
+    faceProcess.join()
     cap.release()
     cv2.destroyAllWindows()
     #integrationUtils.objectTrackerProcess()
