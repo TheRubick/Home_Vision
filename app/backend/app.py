@@ -250,3 +250,4 @@ def delete_face():
     writeLabelsToFile(fileName='labels2.txt',l=labels2)
     return jsonify("")
 
+print("aloooo")
