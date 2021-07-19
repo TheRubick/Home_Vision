@@ -2,7 +2,6 @@
 import numpy as np
 import cv2
 
-from motionDetection import Mog2MotionDetector
 
 class motionDetector:
     def __init__(self,frameNumber=9,history=500):
