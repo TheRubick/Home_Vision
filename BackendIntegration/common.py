@@ -63,6 +63,7 @@ def calculate_hist(grid_imgs):
         #hist = cv2.normalize(hist, hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
         final_hist = np.vstack((final_hist,hist))
     return final_hist
+
 def load_images_from_folder(folderName):
     images = []
     labels = []
@@ -120,8 +121,8 @@ def get_perfect_match(training_data_hist, test_hist, labels):
             min_dist=current_dist
             predicted_lbl=labels[i]
 #             print('min_dist = ', min_dist, 'label=', labels[i])
-    #result_dist.sort(key = lambda x: x[0])
-    #print(result_dist)
+    result_dist.sort(key = lambda x: x[0])
+    print(result_dist)
     return predicted_lbl
 
     
