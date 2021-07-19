@@ -42,3 +42,155 @@ def video_feed():
     global feed 
     feed = True
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/find_object')
+def find_object():
+    camera = cv2.VideoCapture(1)
+    
+    success, frame = camera.read()  # read the camera frame
+    image = cv2.imread('404-error.jpg',cv2.IMREAD_COLOR)
+    camera.release()
+    frame = image
+    ret, buffer = cv2.imencode('.jpg', frame)
+    frame = buffer.tobytes()
+    var = b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
+    return Response(var, mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/track_object')
+def track_object():
+    image = cv2.imread('404-error.jpg',cv2.IMREAD_COLOR)
+    frame = image
+    ret, buffer = cv2.imencode('.jpg', frame)
+    frame = buffer.tobytes()
+    var = b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
+    return Response(var, mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/track_coords',methods=['POST'])
+def take_track_coords():
+    coords = request.get_json()
+    print(coords)
+    x1 = coords.get('x1')
+    y1 = coords.get('y1')
+    x2 = coords.get('x2')
+    y2 = coords.get('y2')
+    response = {'res':"success"}
+    return jsonify(response)
+
+person_faces = []
+person_name=''
+@app.route('/take_photo',methods=['GET'])
+def take_photo():
+    print("in take photo")
+    camera = cv2.VideoCapture(1)
+    success, frame = camera.read()  # read the camera frame
+    camera.release()
+    global person_faces
+    person_faces.append(frame)
+    ret, buffer = cv2.imencode('.jpg', frame)
+    frame = buffer.tobytes()
+    var = b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
+    print("finish take photo")
+    return Response(var, mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/take_photo2',methods=['GET'])
+def take_photo2():
+    print("in take photo")
+    camera = cv2.VideoCapture(1)
+    success, frame = camera.read()  # read the camera frame
+    camera.release()
+    global person_faces
+    person_faces.append(frame)
+    ret, buffer = cv2.imencode('.jpg', frame)
+    frame = buffer.tobytes()
+    var = b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
+    print("finish take photo")
+    return Response(var, mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/take_photo3',methods=['GET'])
+def take_photo3():
+    print("in take photo")
+    camera = cv2.VideoCapture(1)
+    success, frame = camera.read()  # read the camera frame
+    camera.release()
+    global person_faces
+    person_faces.append(frame)
+    ret, buffer = cv2.imencode('.jpg', frame)
+    frame = buffer.tobytes()
+    var = b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
+    print("finish take photo")
+    return Response(var, mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/take_photo4',methods=['GET'])
+def take_photo4():
+    print("in take photo")
+    camera = cv2.VideoCapture(1)
+    success, frame = camera.read()  # read the camera frame
+    camera.release()
+    global person_faces
+    person_faces.append(frame)
+    ret, buffer = cv2.imencode('.jpg', frame)
+    frame = buffer.tobytes()
+    var = b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
+    print("finish take photo")
+    return Response(var, mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/take_photo5',methods=['GET'])
+def take_photo5():
+    print("in take photo")
+    camera = cv2.VideoCapture(1)
+    success, frame = camera.read()  # read the camera frame
+    camera.release()
+    global person_faces
+    person_faces.append(frame)
+    ret, buffer = cv2.imencode('.jpg', frame)
+    frame = buffer.tobytes()
+    var = b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
+    print("finish take photo")
+    return Response(var, mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/take_photo6',methods=['GET'])
+def take_photo6():
+    print("in take photo")
+    camera = cv2.VideoCapture(1)
+    success, frame = camera.read()  # read the camera frame
+    camera.release()
+    global person_faces
+    person_faces.append(frame)
+    ret, buffer = cv2.imencode('.jpg', frame)
+    frame = buffer.tobytes()
+    var = b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
+    print(person_faces[0])
+    return Response(var, mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/cancel_faces',methods=['GET'])
+def cancel_faces():
+    global person_faces
+    global person_name
+    person_faces=[]
+    person_name=''
+    res=""
+    print("caaancceeeellll")
+    return Response(res)
+
+@app.route('/save_name',methods=['POST'])
+def save_name():
+    global person_name
+    json = request.get_json()
+    person_name=json.get('Name')
+    print(person_name)
+    res=""
+    return jsonify(res)
+
+settings=[True, False]
+@app.route('/current_settings',methods=['GET'])
+def current_settings():
+    return jsonify(settings)
+
+@app.route('/update_settings',methods=['POST'])
+def update_settings():
+    global settings
+    json = request.get_json()
+    settings=json.get('Current_Settings')
+    print(settings)
+    res=""
+    return jsonify(res)
