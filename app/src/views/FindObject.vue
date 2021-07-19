@@ -20,8 +20,8 @@
         </ion-list-header>
 
         <ion-item>
-          <ion-label>Gender</ion-label>
-          <ion-select v-model="objectId" placeholder="Select One">
+          <ion-label>Select Object</ion-label>
+          <ion-select v-model="objectId" placeholder="Object">
             <ion-select-option value="0">Backpack</ion-select-option>
             <ion-select-option value="1">Headphones</ion-select-option>
             <ion-select-option value="2">Knife</ion-select-option>
@@ -35,7 +35,7 @@
       </ion-list>
       <ion-button expand="block" size="large" fill="outline" 
       shape="round" @click="find()" color="secondary">Find</ion-button>
-      <img v-if="sent"  v-bind:src="backend_path+'/find_object'"/>
+      <img v-if="sent"  v-bind:src="backend_path+'/find_object/'+objectId"/>
     </ion-content>
 
   </ion-page>

@@ -38,7 +38,7 @@
         </ion-row >
         
           <ion-button v-show="returnHome" expand="block"  size="large" fill="outline" shape="round" 
-                      color="secondary" href="/home">Go home</ion-button> 
+                      color="secondary" @click="startTrain()" href="/home">Go home</ion-button> 
         
         
         
@@ -52,6 +52,7 @@ import {IonInput,IonButtons, IonBackButton, IonContent, IonHeader, IonPage, IonT
 import axios from 'axios';
 const saveNamePath = "/save_name";
 const cancelPath = "/cancel_faces";
+const startTrainPath = "/start_train";
 
 export default {
   name: 'AddFace',
@@ -160,6 +161,10 @@ export default {
       .catch(err => console.log(err));
       this.showImg=false;
       this.forceUpdate();
+    },
+    startTrain(){
+      axios.get(this.$hostName+startTrainPath)
+      .catch(err => console.log(err));
     }
   }
 }
