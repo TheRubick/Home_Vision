@@ -208,3 +208,35 @@ def get_faces():
     labels = list(set(labels))
     return jsonify(labels)
 
+@app.route('/delete_face',methods=['POST'])
+def delete_face():
+    payload = request.get_json()
+    face = payload.get('name')
+    labels1 = readLabeslFromFile('labels1.txt')
+    labels2 = readLabeslFromFile('labels2.txt')
+    training_data_hist1 = readList(fileName="train1.txt")
+    training_data_hist2 = readList(fileName="train2.txt")
+    size = len(labels1)
+    i = 0
+    while(i < size):
+        if labels1[i] == face:
+            labels1.pop(i)
+            training_data_hist1.pop(i)
+            size-=1
+            continue
+        i+=1
+    size = len(labels2)
+    i = 0
+    while(i < size):
+        if labels2[i] == face:
+            labels2.pop(i)
+            training_data_hist2.pop(i)
+            size-=1
+            continue
+        i+=1
+    writeFile(fileName="train1.txt",l=training_data_hist1)
+    writeFile(fileName="train2.txt",l=training_data_hist2)
+    writeLabelsToFile(fileName='labels1.txt',l=labels1)
+    writeLabelsToFile(fileName='labels2.txt',l=labels2)
+    return jsonify("")
+
