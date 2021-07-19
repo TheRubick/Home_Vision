@@ -47,8 +47,9 @@ def video_feed():
     feed = True
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/find_object')
-def find_object():
+@app.route('/find_object/<objectId>', methods=['GET'])
+def find_object(objectId):
+    print("objectId = ", objectId)
     camera = cv2.VideoCapture(cameraIndx)
     
     success, frame = camera.read()  # read the camera frame
