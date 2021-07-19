@@ -1,13 +1,34 @@
+# from BackendIntegration.Face_Detection import Face_Detection
+# from BackendIntegration.Face_Detection import Face_Detection
 from common import *
-import face_recognition
+
+import sys, os, inspect
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(os.path.dirname(currentdir))
+directory = os.path.join(parentdir,"BackendIntegration")
+sys.path.insert(0, directory)
+
+from Face_Detection import Face_Detection
+
+obj = Face_Detection(yolo = os.path.join(directory,"yolov4-tiny"))
+
 
 def detectFaces(frame):
-    small_frame = frame
-    # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
-    rgb_small_frame = small_frame[:, :, ::-1]
-    # Find all the facesimport face_recognition and face encodings in the current frame of video
-    face_locations = face_recognition.face_locations(rgb_small_frame)
-    return face_locations
+     
+    image = frame
+    obj.search_img(image)
+
+    if obj.found:
+        # print(obj.boxes)
+        # print(obj.classes)
+        # # obj.draw_bounding_boxes(image,show = True)
+        imgs = obj.get_faces(image)
+    
+        return imgs
+
+   
+
 
 def train_faces(label,images):
     training_data_hist1 = readList(fileName="train1.txt")
@@ -15,19 +36,18 @@ def train_faces(label,images):
     labels1 = readLabeslFromFile("labels1.txt")
     labels2 = readLabeslFromFile("labels2.txt")
     for img in images:
-        face_locations = detectFaces(img)
-        for (top, right, bottom, left) in face_locations:
-            test_img = img[top:bottom, left:right]
+        faces = detectFaces(img)
+        for test_img in faces:
             image = cv2.cvtColor(test_img, cv2.COLOR_RGB2GRAY)
             dim = (198, 198)
-            if  abs(left-right) <=160 or abs(top-bottom) <= 160:
+            if  image.shape[0] <=160 or image.shape[1] <= 160:
                 dim = (100,100)
             image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
             image = cv2.equalizeHist(image)
             image = extended_lbp(image, 1,8)
             image_grids = img_to_grid(image, x=7, y = 7)
             trainHist = calculate_weighted_hist(image_grids)
-            if abs(left-right) <=160 or abs(top-bottom) <= 160:
+            if image.shape[0] <=160 or image.shape[1] <= 160:
                 training_data_hist2.append(trainHist)
                 labels2.append(label)
             else:

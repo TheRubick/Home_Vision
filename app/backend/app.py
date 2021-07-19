@@ -4,7 +4,7 @@ from flask_cors import CORS, cross_origin
 import cv2
 from datetime import datetime
 
-from extendedLBPH_test import *
+# from extendedLBPH_test import *
 from extendedLBPH_train import *
 
 feed = False
