@@ -93,7 +93,7 @@ class Face_Detection:
 
 
         # show timing information on YOLO
-        # print("[INFO] YOLO took {:.6f} seconds".format(end - start))
+        print("[INFO] YOLO took {:.6f} seconds".format(end - start))
 
 
         # initialize our lists of detected bounding boxes, confidences, and
