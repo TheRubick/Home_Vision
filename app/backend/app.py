@@ -1,5 +1,8 @@
-from flask import Flask, request, jsonify, Response
+from flask import Flask, json, request, jsonify, Response
 from flask_cors import CORS, cross_origin
+from flask_mail import Mail, Message
+
+
 #from models import User, Course, Student, StaffMember, Semester, Requirement
 import cv2
 from datetime import datetime
@@ -7,33 +10,69 @@ from datetime import datetime
 # from extendedLBPH_test import *
 from extendedLBPH_train import *
 
+# track box
+
+track_box = [0,0,0,0]
+
 feed = False
 
 app = Flask(__name__)
+
+app.config['MAIL_SERVER']='smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USERNAME'] = 'homevisionapp@gmail.com'
+app.config['MAIL_PASSWORD'] = 'homevisionGP21'
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
+mail = Mail(app)
 CORS(app, support_credentials=True)
 
-cameraIndx=0
+cameraIndx = 0
 
-def gen_frames():
-    camera = cv2.VideoCapture(cameraIndx)  
+import multiprocessing
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(os.path.dirname(currentdir))
+directory = os.path.join(parentdir,"BackendIntegration")
+sys.path.insert(0, directory)
+
+from Main import modulesProcess
+
+flask_main_queue,main_flask_queue = multiprocessing.Queue() , multiprocessing.Queue()
+
+queue_from_cam = multiprocessing.Queue()
+
+
+moduleProcess = multiprocessing.Process(target=modulesProcess,args=(
+        flask_main_queue,main_flask_queue, queue_from_cam))
+
+moduleProcess.start()
+
+
+
+def gen_frames(box = False):
+    # camera = cv2.VideoCapture(cameraIndx)  
     while feed:
-        success, frame = camera.read()  # read the camera frame
-        if not success:
-            break
         
+        frame = queue_from_cam.get()
+        if box:
+            x , y = track_box[:2]
+            w =  track_box[2]
+            h =  track_box[3]
+            cv2.rectangle(frame,(x,y),(x + w, y+ h),(255,0,0),2)
+
+
         ret, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
+
         yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-    camera.release()
+        print("get Here")
 
-@app.route('/test',methods=['GET'])
-def getStadiums():
-    response = {'res':"there is data"}
-    return jsonify(response)
 
 @app.route('/stop_feed',methods=['GET'])
 def stop_feed():
+    global track_flag
+    main_flask_queue.put({"stopFeed":True , "track_flag" : track_flag})
     print("in stop request")
     global feed
     feed = False
@@ -42,6 +81,7 @@ def stop_feed():
 
 @app.route('/video_feed')
 def video_feed():
+    main_flask_queue.put({"livefeed": True})
     print("in live feed")
     global feed 
     feed = True
@@ -50,12 +90,14 @@ def video_feed():
 @app.route('/find_object/<objectId>', methods=['GET'])
 def find_object(objectId):
     print("objectId = ", objectId)
-    camera = cv2.VideoCapture(cameraIndx)
-    
-    success, frame = camera.read()  # read the camera frame
-    image = cv2.imread('404-error.jpg',cv2.IMREAD_COLOR)
-    camera.release()
-    frame = image
+    main_flask_queue.put({"find_object":True,"classID":int(objectId)})
+    result = flask_main_queue.get()
+    if result["found"]:
+        frame = result["frame"]
+    else:
+        frame = cv2.imread("404-error.jpg")
+
+    print("get images")
     ret, buffer = cv2.imencode('.jpg', frame)
     frame = buffer.tobytes()
     var = b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
@@ -63,21 +105,23 @@ def find_object(objectId):
 
 @app.route('/track_object')
 def track_object():
-    image = cv2.imread('404-error.jpg',cv2.IMREAD_COLOR)
-    frame = image
-    ret, buffer = cv2.imencode('.jpg', frame)
-    frame = buffer.tobytes()
-    var = b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
-    return Response(var, mimetype='multipart/x-mixed-replace; boundary=frame')
+    main_flask_queue.put({"livefeed": True})
+    global feed 
+    feed = True
+    return Response(gen_frames(box= True), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/track_coords',methods=['POST'])
 def take_track_coords():
     coords = request.get_json()
-    print(coords)
+    print(coords, " from front")
+    global track_flag
+    track_flag = True
     x1 = coords.get('x1')
     y1 = coords.get('y1')
     x2 = coords.get('x2')
     y2 = coords.get('y2')
+    res = {"track":True,"points":[x1,x2,y1,y2]}
+    main_flask_queue.put(res)
     response = {'res':"success"}
     return jsonify(response)
 
@@ -198,7 +242,7 @@ def save_name():
     res=""
     return jsonify(res)
 
-settings=[True, False]
+settings=[False, False]
 @app.route('/current_settings',methods=['GET'])
 def current_settings():
     return jsonify(settings)
@@ -208,6 +252,8 @@ def update_settings():
     global settings
     json = request.get_json()
     settings=json.get('Current_Settings')
+
+    main_flask_queue.put({"settings": settings})
     print(settings)
     res=""
     return jsonify(res)
@@ -250,4 +296,64 @@ def delete_face():
     writeLabelsToFile(fileName='labels1.txt',l=labels1)
     writeLabelsToFile(fileName='labels2.txt',l=labels2)
     return jsonify("")
+
+
+@app.route('/from_main',methods=['GET'])
+def from_main():
+
+    mode = request.args.get("mode")
+    msg = None
+    if mode == "motion":
+        msgText = "Motion is detected .... check it out :D"
+    if mode == "track":
+        msgText = "Your object is out of the scene :("
+    if mode == "face":
+        name = request.args.get("name")
+        if name == "unknown":
+            msgText = "there is a person in the scene and we dont know it :("
+        else:
+            msgText = " Say hello to your friend {}".format(name)
+
+    msg = Message(mode.upper(), sender = 'homevisionapp@gmail.com', recipients = ['gellesh.arg@gmail.com'])
+    msg.body = msgText
+    mail.send(msg)
+    return "dummy"
+
+@app.route('/from_track',methods=['GET'])
+def from_track():
+
+    # x , y ,w ,h
+    x = int(request.args.get("x1"))
+    y = int(request.args.get("y1"))
+
+    w = int(request.args.get("w"))
+
+    h = int(request.args.get("h"))
+
+    global track_box 
+
+    track_box = [ x ,y , w , h ] 
+    
+    # msg = Message('Hello', sender = 'homevisionapp@gmail.com', recipients = ['engjimmy98@gmail.com'])
+    # msg.body = "Hello Flask message sent from Flask-Mail"
+    # mail.send(msg)
+    return "dummy"
+track_flag = False
+@app.route('/track_flag',methods=['GET'])
+def track_flag():
+    global track_flag
+
+    response = {'flag':track_flag}
+    return jsonify(response)
+
+@app.route('/track_flag_stop',methods=['GET'])
+def track_flag_stop():
+
+    global track_flag
+    # payload = request.get_json()
+    track_flag = False
+    global track_box 
+    track_box = [0,0,0,0]
+    main_flask_queue.put({"closeTrack":True})
+    return jsonify('success')
 
