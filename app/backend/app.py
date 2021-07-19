@@ -3,6 +3,10 @@ from flask_cors import CORS, cross_origin
 #from models import User, Course, Student, StaffMember, Semester, Requirement
 import cv2
 from datetime import datetime
+
+from extendedLBPH_test import *
+from extendedLBPH_train import *
+
 feed = False
 
 app = Flask(__name__)
@@ -155,11 +159,13 @@ def take_photo6():
     success, frame = camera.read()  # read the camera frame
     camera.release()
     global person_faces
+    global person_name
     person_faces.append(frame)
     ret, buffer = cv2.imencode('.jpg', frame)
     frame = buffer.tobytes()
     var = b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
     print(person_faces[0])
+    train_faces(label=person_name,images=person_faces)
     return Response(var, mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/cancel_faces',methods=['GET'])
@@ -194,3 +200,11 @@ def update_settings():
     print(settings)
     res=""
     return jsonify(res)
+
+@app.route('/get_faces',methods=['GET'])
+def get_faces():
+    labels = readLabeslFromFile('labels1.txt')
+    labels += readLabeslFromFile('labels2.txt')
+    labels = list(set(labels))
+    return jsonify(labels)
+
