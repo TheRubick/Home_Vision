@@ -3,7 +3,7 @@ from common import *
 
 
 def recognise_face(img):
-    pathTx = "../app/backend"
+    pathTx =""
     training_data_hist1 = readList(os.path.join(pathTx,'train1.txt'))
     training_data_hist2 = readList(os.path.join(pathTx,'train2.txt'))
     labels1 = readLabeslFromFile(os.path.join(pathTx,'labels1.txt'))

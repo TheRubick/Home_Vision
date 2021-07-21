@@ -80,7 +80,8 @@ def objectTrackerProcess(trackerProcessQueue,mainProcessQueue,ix, iy, frameWidth
             cv2.putText(frame, 'FPS: ' + str(1 / duration)[:4].strip('.'), (8, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
             trackerResp = {
                 "frame" : frame,
-                "resp" : False 
+                "resp" : False, 
+                "box":boundingbox
             }
 
             

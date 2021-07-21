@@ -12,12 +12,14 @@
     </ion-header>
     
     <ion-content  >
-    <img v-if="!stream" @click="getCoordinates($event)" ref="theImage" v-bind:src="backend_path+'/track_object'"/> 
-    <img v-if="stream" v-bind:src="backend_path+'/video_feed'"/>
-    <ion-button disabled v-show="!enable" expand="block" size="large" fill="outline" 
+    <img  @click="getCoordinates($event)" ref="theImage" v-bind:src="backend_path+'/track_object'"/> 
+    
+    <ion-button disabled v-show="!enable&&!tracking" expand="block" size="large" fill="outline" 
       shape="round" @click="track()" color="secondary" >Track</ion-button>
-      <ion-button  v-show="enable" expand="block" size="large" fill="outline" 
+      <ion-button  v-show="enable&&!tracking" expand="block" size="large" fill="outline" 
       shape="round" @click="track()" color="secondary" >Track</ion-button>
+      <ion-button  v-show="tracking" expand="block" size="large" fill="outline" 
+      shape="round" @click="stopTrack()" color="secondary" >Stop Tracking</ion-button>
     <ion-card>
     <ion-card-content v-show="show">
       X axis from {{x1}}% to {{x2}}%
@@ -34,6 +36,8 @@ import {IonButtons, IonBackButton, IonContent, IonHeader, IonPage, IonTitle,
 import axios from 'axios';
 const cooords_path = "/track_coords";
 const stop_feed_path = "/stop_feed";
+const track_flag_path = "/track_flag"
+const track_flag_path2 = "/track_flag_stop"
 //
 export default {
   name: 'TrackObject',
@@ -59,7 +63,8 @@ export default {
           myImage:'',
           show:false,
           enable: false,
-          stream: false 
+          stream: false,
+          tracking: false
       }
   },
   methods:{
@@ -101,7 +106,7 @@ export default {
         this.show = true;
         var payload = {
         x1:this.x1,
-        y1:this.x1,
+        y1:this.y1,
         x2:this.x2,
         y2:this.y2
         }
@@ -111,6 +116,7 @@ export default {
             if (res.data.res == "success") {
                 this.stream= true;
             }
+            this.tracking = true
         })
     },
     stop(){
@@ -121,8 +127,30 @@ export default {
         })
       .catch(err => console.log(err));
       this.$router.push({name:"Home"})
+    },
+    stopTrack(){
+      /*var payload = {
+        flag:true
+      }*/
+      axios.get(this.backend_path+track_flag_path2)
+        .then(res =>{
+            console.log(res);
+            this.readFalg();
+        })
+    },
+    readFalg(){
+      axios.get(this.backend_path+track_flag_path)
+      .then(
+        res => {
+        this.tracking = res.data.flag ;
+        console.log(this.tracking);
+        })
+      .catch(err => console.log(err));
     }
 
+  },
+  beforeMount(){
+    this.readFalg()
   }
 }
 </script>
