@@ -66,7 +66,6 @@ def gen_frames(box = False):
 
         yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-        print("get Here")
 
 
 @app.route('/stop_feed',methods=['GET'])
@@ -130,9 +129,9 @@ person_name=''
 @app.route('/take_photo',methods=['GET'])
 def take_photo():
     print("in take photo")
-    camera = cv2.VideoCapture(cameraIndx)
-    success, frame = camera.read()  # read the camera frame
-    camera.release()
+    
+    main_flask_queue.put({"wantFrame":True})
+    frame = flask_main_queue.get()
     global person_faces
     person_faces.append(frame)
     ret, buffer = cv2.imencode('.jpg', frame)
@@ -144,9 +143,9 @@ def take_photo():
 @app.route('/take_photo2',methods=['GET'])
 def take_photo2():
     print("in take photo")
-    camera = cv2.VideoCapture(cameraIndx)
-    success, frame = camera.read()  # read the camera frame
-    camera.release()
+
+    main_flask_queue.put({"wantFrame":True})
+    frame = flask_main_queue.get()
     global person_faces
     person_faces.append(frame)
     ret, buffer = cv2.imencode('.jpg', frame)
@@ -158,9 +157,8 @@ def take_photo2():
 @app.route('/take_photo3',methods=['GET'])
 def take_photo3():
     print("in take photo")
-    camera = cv2.VideoCapture(cameraIndx)
-    success, frame = camera.read()  # read the camera frame
-    camera.release()
+    main_flask_queue.put({"wantFrame":True})
+    frame = flask_main_queue.get()
     global person_faces
     person_faces.append(frame)
     ret, buffer = cv2.imencode('.jpg', frame)
@@ -172,9 +170,8 @@ def take_photo3():
 @app.route('/take_photo4',methods=['GET'])
 def take_photo4():
     print("in take photo")
-    camera = cv2.VideoCapture(cameraIndx)
-    success, frame = camera.read()  # read the camera frame
-    camera.release()
+    main_flask_queue.put({"wantFrame":True})
+    frame = flask_main_queue.get()
     global person_faces
     person_faces.append(frame)
     ret, buffer = cv2.imencode('.jpg', frame)
@@ -186,9 +183,8 @@ def take_photo4():
 @app.route('/take_photo5',methods=['GET'])
 def take_photo5():
     print("in take photo")
-    camera = cv2.VideoCapture(cameraIndx)
-    success, frame = camera.read()  # read the camera frame
-    camera.release()
+    main_flask_queue.put({"wantFrame":True})
+    frame = flask_main_queue.get()
     global person_faces
     person_faces.append(frame)
     ret, buffer = cv2.imencode('.jpg', frame)
@@ -200,15 +196,17 @@ def take_photo5():
 @app.route('/take_photo6',methods=['GET'])
 def take_photo6():
     print("in take photo")
-    camera = cv2.VideoCapture(cameraIndx)
-    success, frame = camera.read()  # read the camera frame
-    camera.release()
+    
+    main_flask_queue.put({"wantFrame":True})
+    frame = flask_main_queue.get()
     global person_faces
     global person_name
     person_faces.append(frame)
     ret, buffer = cv2.imencode('.jpg', frame)
     frame = buffer.tobytes()
     var = b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
+    print("finish take photo")
+
     return Response(var, mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/start_train',methods=['GET'])
@@ -306,6 +304,10 @@ def from_main():
     if mode == "motion":
         msgText = "Motion is detected .... check it out :D"
     if mode == "track":
+        global track_flag
+        track_flag = False
+        global track_box 
+        track_box = [0,0,0,0]
         msgText = "Your object is out of the scene :("
     if mode == "face":
         name = request.args.get("name")

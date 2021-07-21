@@ -18,9 +18,11 @@ def recognise_face(img):
     image_grids = img_to_grid(image, x=7, y = 7)
     testHist = calculate_weighted_hist(image_grids)
     result = "unknown"
+    min_dist = None
     if image.shape[0] <=160 or image.shape[1] <= 160:
-        result = get_perfect_match(training_data_hist2 , testHist,labels2)
+        result  = get_perfect_match(training_data_hist2 , testHist,labels2)
     else:
-        result = get_perfect_match(training_data_hist1 , testHist,labels1)
+        result  = get_perfect_match(training_data_hist1 , testHist,labels1)
+
     return result
 
