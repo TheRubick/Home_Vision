@@ -372,5 +372,28 @@ def getEmail():
         'email':email
     }
     return jsonify(res)
-
-
+useCaseEnabledFlag = False
+useCaseItem = ""
+useCaseFace = ""
+@app.route('/get_use_case',methods = ['GET'])
+def getUseCase():
+    global useCaseEnabledFlag
+    global useCaseItem
+    global useCaseFace
+    res = {
+        "flag":useCaseEnabledFlag,
+        "item":useCaseItem,
+        "face": useCaseFace
+    }
+    return jsonify(res)
+@app.route('/set_use_case',methods = ['POST'])
+def setUseCase():
+    global useCaseEnabledFlag
+    global useCaseItem
+    global useCaseFace
+    payload = request.get_json()
+    useCaseEnabledFlag = payload.get("flag")
+    useCaseFace = payload.get("face")
+    useCaseItem = payload.get("item")
+    #print(useCaseEnabledFlag)
+    return jsonify("")
