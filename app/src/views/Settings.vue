@@ -129,13 +129,14 @@ export default {
       var payload = {
         email: this.email
       }
-      axios.post(this.backend_path+change_mail_path,payload)
+      axios.post(this.$hostName+change_mail_path,payload)
         .then(res =>{
             console.log(res);
+            this.getMail()
         })
     },
     getMail(){
-      axios.get(this.backend_path+get_mail_path)
+      axios.get(this.$hostName+get_mail_path)
         .then(res =>{
             this.email = res.data.email;
         })
@@ -151,6 +152,8 @@ export default {
       .then(res => {this.faces=res.data;
           })
       .catch(err => console.log(err))
+
+      this.getMail()
   }
 }
 </script>
