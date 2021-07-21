@@ -356,4 +356,19 @@ def track_flag_stop():
     track_box = [0,0,0,0]
     main_flask_queue.put({"closeTrack":True})
     return jsonify('success')
+email = "engjimmy98@gmail.com"
+app.route('/change_mail',methods=['POST'])
+def changeEmail():
+    global email
+    payload = request.get_json()
+    email = payload.get('email')   
+    return jsonify('success')
+app.route('/get_mail',methods=['GET'])
+def getEmail():
+    global email
+    res = {
+        'email':email
+    }
+    return jsonify(res)
+
 

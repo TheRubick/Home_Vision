@@ -40,21 +40,29 @@
                 <ion-button  expand="block"  fill="outline" 
               shape="round" @click="deleteFace()" color="secondary">Delete</ion-button>
         </ion-item>
-
+        <ion-item>
+          <ion-label>Default Label</ion-label>
+          <ion-input v-model="email" inputmode="email" placeholder="Enter Email"></ion-input>
+           <ion-button  size="small"  fill="outline" 
+              shape="round"  @click="changeMail()" color="secondary">change E-Mail</ion-button>
+        </ion-item>
+        
         </ion-list>
-      </ion-content>
+    </ion-content>
   </ion-page>
 </template>
 <script>
 import {IonButtons, IonBackButton, IonContent, IonHeader, IonPage, IonTitle,
      IonToolbar,IonLabel, IonList, IonItem, IonToggle, IonButton,IonSelect,
-  IonSelectOption} from '@ionic/vue';
+  IonSelectOption,IonInput} from '@ionic/vue';
 
 import axios from 'axios';
 const currentSettingsPath = "/current_settings";
 const updateSettingsPath = "/update_settings";
 const get_faces_path = "/get_faces";
 const delete_face_path = "/delete_face";
+const change_mail_path = "/change_mail";
+const get_mail_path = "/get_mail";
 
 export default {
   name: 'Settings',
@@ -72,13 +80,15 @@ export default {
     IonToggle,
     IonButton,
     IonSelect,
-    IonSelectOption
+    IonSelectOption,
+    IonInput
   },
   data(){
     return{
       current_settings:[],
        faces:null,
-       selectedFace:""
+       selectedFace:"",
+       email:"sds"
     }
   },
   methods:{
@@ -114,6 +124,21 @@ export default {
         .catch(err => console.log(err))
       }
       
+    },
+    changeMail(){
+      var payload = {
+        email: this.email
+      }
+      axios.post(this.backend_path+change_mail_path,payload)
+        .then(res =>{
+            console.log(res);
+        })
+    },
+    getMail(){
+      axios.get(this.backend_path+get_mail_path)
+        .then(res =>{
+            this.email = res.data.email;
+        })
     }
   },
   beforeMount(){
