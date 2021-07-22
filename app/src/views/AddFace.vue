@@ -32,13 +32,13 @@
               <ion-button v-show="!show_name_items && !returnHome"  size="large" fill="outline" shape="round" 
                  color="secondary" @click="takePhoto()">take photo ({{counter}})</ion-button>
               <ion-button v-show="!returnHome && !disableCancel"  size="large" fill="outline" shape="round" 
-                     color="secondary" @click="cancel()" href="/home/addface">cancel</ion-button>  
+                     color="secondary" @click="cancel()" >cancel</ion-button>  
                         
           </ion-col>
         </ion-row >
         
           <ion-button v-show="returnHome" expand="block"  size="large" fill="outline" shape="round" 
-                      color="secondary" @click="startTrain()" href="/home">Go home</ion-button> 
+                      color="secondary" @click="startTrain()" >Go home</ion-button> 
         
         
         
@@ -158,13 +158,37 @@ export default {
       this.second=false;
       this.third=false;
       axios.get(this.$hostName+cancelPath)
+      .then(res =>{
+        console.log(res);
+        this.showImg=false;
+        //this.$router.replace({name:"AddFace"});
+        this.first=false;
+        this.second=false;
+        this.third=false;
+        this.fourth=true;
+        this.fifth=false;
+        this.sixth=false;
+        this.counter = 6;
+        this.returnHome = false;
+      
+        this.faceImgs = null;
+        this.personName = '';
+        this.show_name_items = true;
+        this.temp = null;
+        this.disableTake =false;
+        this.disableCancel =true ;
+      })
       .catch(err => console.log(err));
-      this.showImg=false;
+      
       this.forceUpdate();
     },
     startTrain(){
       axios.get(this.$hostName+startTrainPath)
+      .then(res =>{
+        console.log(res);
+      })
       .catch(err => console.log(err));
+      this.$router.push({name:"Home"})
     }
   }
 }

@@ -1,8 +1,10 @@
 from os import sendfile
+from pickle import FALSE
 from flask.json import jsonify
 
 from flask.wrappers import Response
 from numba.core.serialize import FastNumbaPickler
+from numpy.core.numeric import False_
 from requests.api import head
 from adaMotionClass import motionDetector
 import multiprocessing
@@ -31,7 +33,7 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
 
     faces = []
     faceVotes = 5
-    receiveFace = True   # face on / off   
+    receiveFace = False   # face on / off   
     sentFace = False
 
     faceProcessQueue = multiprocessing.Queue()
@@ -44,6 +46,7 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
 
     
     # object detection
+    
     sentObj = False
     detectionProcessQueue = multiprocessing.Queue()
     mainDetectionProcessQueue = multiprocessing.Queue()
@@ -113,7 +116,7 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
                 msg = main_flask_queue.get_nowait()
 
                 if "settings" in msg:
-                    print("user is playing with phone")
+                    print("setting changed")
                     receiveFace , recieveMotion= msg["settings"]
 
                 if "track" in msg:
@@ -128,7 +131,7 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
                     # x1 , x2 = 0.5 * width , 0.75 * width
                     # y1 , y2 = 0.5 * height , 0.75 * height
 
-                    print(x1,x2,y1,y2, " from back")
+                    # print(x1,x2,y1,y2, " from back")
                     rect_box = [int(x1),int(y1),int(x2-x1),int(y2-y1)]
                     print(rect_box)
                     # print(rect_box)
@@ -153,6 +156,9 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
                 if "find_object" in msg:
                     detectOn = True
                     class_to_detect = msg["classID"]
+
+                if "wantFrame" in msg:
+                    flask_main_queue.put(frame)
 
             except:
                 if liveFeed == True:
@@ -180,8 +186,6 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
             if not initTracking:
                 mainProcessQueue.put(trackerStatus)
                 dum = trackerProcessQueue.get()
-                #print(dum)
-                #print("heererererererereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
                 initTracking = True
             else:
                 if receiveTracker:
@@ -234,7 +238,6 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
                     response = {"motion":True}
                     resp = requests.get(url = "http://0.0.0.0:5000/from_main?mode={}".format("motion"))
                     print(resp.text)
-                    print("haere")
                     resetMotionDetection = True
                     startedTimer = True
                     timer = time.time()
@@ -265,7 +268,7 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
                     if "found" in result:
                         sentObj = False
                         if result["found"]:
-                            print("obj founded")
+                            # print("obj founded")
                             # send to user obj location in scene
                             flask_main_queue.put({"frame":result["image"],"found":True})
                             cv2.imshow('detection', result["image"])
@@ -299,15 +302,14 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
                         if result["found"] and len(faces)==faceVotes:
                             most = most_common(faces)
                             faces = []
-
-                            print("Face detected")
+                            print(" most face detected is {}".format(most))
                             # send to user obj location in scene
                             resp = requests.get(url ="http://0.0.0.0:5000/from_main?mode={}&name={}"
                             .format("face",most))
                             # cv2.imshow('detection', result["image"])
                             # cv2.waitKey(1)
                         elif not result["found"]:
-                            print("no Face founded")
+                            print("calculate face votes")
                             # send to user obj location in scene 
 
                 except:

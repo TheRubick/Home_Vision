@@ -26,6 +26,8 @@ def detectFaces(frame):
         imgs = obj.get_faces(image)
     
         return imgs
+    else:
+        return []
 
    
 
@@ -37,6 +39,7 @@ def train_faces(label,images):
     labels2 = readLabeslFromFile("labels2.txt")
     for img in images:
         faces = detectFaces(img)
+        print(faces)
         for test_img in faces:
             image = cv2.cvtColor(test_img, cv2.COLOR_RGB2GRAY)
             dim = (198, 198)

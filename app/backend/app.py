@@ -66,7 +66,6 @@ def gen_frames(box = False):
 
         yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-        print("get Here")
 
 
 @app.route('/stop_feed',methods=['GET'])
@@ -130,9 +129,9 @@ person_name=''
 @app.route('/take_photo',methods=['GET'])
 def take_photo():
     print("in take photo")
-    camera = cv2.VideoCapture(cameraIndx)
-    success, frame = camera.read()  # read the camera frame
-    camera.release()
+    
+    main_flask_queue.put({"wantFrame":True})
+    frame = flask_main_queue.get()
     global person_faces
     person_faces.append(frame)
     ret, buffer = cv2.imencode('.jpg', frame)
@@ -144,9 +143,9 @@ def take_photo():
 @app.route('/take_photo2',methods=['GET'])
 def take_photo2():
     print("in take photo")
-    camera = cv2.VideoCapture(cameraIndx)
-    success, frame = camera.read()  # read the camera frame
-    camera.release()
+
+    main_flask_queue.put({"wantFrame":True})
+    frame = flask_main_queue.get()
     global person_faces
     person_faces.append(frame)
     ret, buffer = cv2.imencode('.jpg', frame)
@@ -158,9 +157,8 @@ def take_photo2():
 @app.route('/take_photo3',methods=['GET'])
 def take_photo3():
     print("in take photo")
-    camera = cv2.VideoCapture(cameraIndx)
-    success, frame = camera.read()  # read the camera frame
-    camera.release()
+    main_flask_queue.put({"wantFrame":True})
+    frame = flask_main_queue.get()
     global person_faces
     person_faces.append(frame)
     ret, buffer = cv2.imencode('.jpg', frame)
@@ -172,9 +170,8 @@ def take_photo3():
 @app.route('/take_photo4',methods=['GET'])
 def take_photo4():
     print("in take photo")
-    camera = cv2.VideoCapture(cameraIndx)
-    success, frame = camera.read()  # read the camera frame
-    camera.release()
+    main_flask_queue.put({"wantFrame":True})
+    frame = flask_main_queue.get()
     global person_faces
     person_faces.append(frame)
     ret, buffer = cv2.imencode('.jpg', frame)
@@ -186,9 +183,8 @@ def take_photo4():
 @app.route('/take_photo5',methods=['GET'])
 def take_photo5():
     print("in take photo")
-    camera = cv2.VideoCapture(cameraIndx)
-    success, frame = camera.read()  # read the camera frame
-    camera.release()
+    main_flask_queue.put({"wantFrame":True})
+    frame = flask_main_queue.get()
     global person_faces
     person_faces.append(frame)
     ret, buffer = cv2.imencode('.jpg', frame)
@@ -200,15 +196,17 @@ def take_photo5():
 @app.route('/take_photo6',methods=['GET'])
 def take_photo6():
     print("in take photo")
-    camera = cv2.VideoCapture(cameraIndx)
-    success, frame = camera.read()  # read the camera frame
-    camera.release()
+    
+    main_flask_queue.put({"wantFrame":True})
+    frame = flask_main_queue.get()
     global person_faces
     global person_name
     person_faces.append(frame)
     ret, buffer = cv2.imencode('.jpg', frame)
     frame = buffer.tobytes()
     var = b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
+    print("finish take photo")
+
     return Response(var, mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/start_train',methods=['GET'])
@@ -307,6 +305,10 @@ def from_main():
     if mode == "motion":
         msgText = "Motion is detected .... check it out :D"
     if mode == "track":
+        global track_flag
+        track_flag = False
+        global track_box 
+        track_box = [0,0,0,0]
         msgText = "Your object is out of the scene :("
     if mode == "face":
         name = request.args.get("name")
@@ -357,4 +359,42 @@ def track_flag_stop():
     track_box = [0,0,0,0]
     main_flask_queue.put({"closeTrack":True})
     return jsonify('success')
-
+email = "engjimmy98@gmail.com"
+@app.route('/change_mail',methods=['POST'])
+def changeEmail():
+    global email
+    payload = request.get_json()
+    email = payload.get('email')   
+    return jsonify('success')
+@app.route('/get_mail',methods=['GET'])
+def getEmail():
+    global email
+    res = {
+        'email':email
+    }
+    return jsonify(res)
+useCaseEnabledFlag = False
+useCaseItem = ""
+useCaseFace = ""
+@app.route('/get_use_case',methods = ['GET'])
+def getUseCase():
+    global useCaseEnabledFlag
+    global useCaseItem
+    global useCaseFace
+    res = {
+        "flag":useCaseEnabledFlag,
+        "item":useCaseItem,
+        "face": useCaseFace
+    }
+    return jsonify(res)
+@app.route('/set_use_case',methods = ['POST'])
+def setUseCase():
+    global useCaseEnabledFlag
+    global useCaseItem
+    global useCaseFace
+    payload = request.get_json()
+    useCaseEnabledFlag = payload.get("flag")
+    useCaseFace = payload.get("face")
+    useCaseItem = payload.get("item")
+    #print(useCaseEnabledFlag)
+    return jsonify("")

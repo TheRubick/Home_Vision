@@ -122,8 +122,9 @@ def get_perfect_match(training_data_hist, test_hist, labels):
             predicted_lbl=labels[i]
 #             print('min_dist = ', min_dist, 'label=', labels[i])
     result_dist.sort(key = lambda x: x[0])
-    print(result_dist)
-    return predicted_lbl
+    print(predicted_lbl)
+    print(min_dist, " minmum distance")
+    return min_dist
 
     
 def calculate_weighted_hist(grid_imgs):

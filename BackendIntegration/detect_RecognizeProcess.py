@@ -19,6 +19,8 @@ def FaceDetectionProcess(faceProcessQueue,mainFaceProcessQueue):
     while True:
         obj_to_detect = mainFaceProcessQueue.get()
         image = obj_to_detect["frame"]
+        faceName = None
+
         obj.search_img(image)
         if obj.found:
             # print(obj.boxes)
@@ -27,9 +29,13 @@ def FaceDetectionProcess(faceProcessQueue,mainFaceProcessQueue):
             imgs = obj.get_faces(image)
             # Here call face recognize
             for img in imgs:
-                if img.shape[0] > 90 and img.shape[1] > 90:
+                if img.shape[0] > 5 and img.shape[1] > 5:
                     faceName = recognise_face(img)
-                    print(faceName)
+                    print(faceName , " during voting")
+                    cv2.imshow('face detection', img)
+                    cv2.waitKey(1)
+
+
             response = {"image":imgs,"found":True,"faceName":faceName}
             
         else:

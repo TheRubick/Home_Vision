@@ -4,6 +4,7 @@ import os
 # import matplotlib.pyplot as plt
 import math 
 
+
 def extended_lbp(src,r = 1,neighbours = 8):
     #output image
     result =np.zeros(src.shape,np.uint8)
@@ -109,7 +110,7 @@ def readList(fileName):
     return bigL
 #remember could make training data hist global to save memory
 def get_perfect_match(training_data_hist, test_hist, labels):
-    min_dist = 100
+    min_dist = 65
     predicted_lbl = 'unknown'
     result_dist = []
     for i in range(len(training_data_hist)):
@@ -122,6 +123,7 @@ def get_perfect_match(training_data_hist, test_hist, labels):
 #             print('min_dist = ', min_dist, 'label=', labels[i])
     #result_dist.sort(key = lambda x: x[0])
     #print(result_dist)
+    print(min_dist)
     return predicted_lbl
 
     
