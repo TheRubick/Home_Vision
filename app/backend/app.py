@@ -300,6 +300,7 @@ def delete_face():
     writeLabelsToFile(fileName='labels2.txt',l=labels2)
     return jsonify("")
 
+print("aloooo")
 
 @app.route('/from_main',methods=['GET'])
 def from_main():
