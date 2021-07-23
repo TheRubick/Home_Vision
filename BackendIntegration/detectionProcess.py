@@ -6,8 +6,6 @@ import sys, os, inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 directory = os.path.join(parentdir,"BackendIntegration")
-# sys.path.insert(0, directory)
-# print(parentdir , " lfafafafaffafaaaaaaaaaaaaaaaaaaaaclear")
 
 def objectDetectionProcess(detectionProcessQueue,mainProcessQueue):
     obj = Detect(yolo=os.path.join(directory,"yolov4"))

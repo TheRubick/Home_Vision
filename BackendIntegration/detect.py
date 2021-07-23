@@ -12,7 +12,7 @@ import os
 class Detect:
 
 
-    def __init__(self, yolo = "model", conf = 0.3, thres = 0.5):
+    def __init__(self, yolo = "model", conf = 0.1, thres = 0.5):
 
         """
             initalize parameters of the detector
@@ -53,7 +53,7 @@ class Detect:
 
         """
 
-        iteration = "2000"
+        iteration = "10000"
         weights = "yolov4-obj_{}.weights".format(iteration)
 
         modelsPath = "weights"

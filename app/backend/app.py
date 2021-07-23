@@ -15,6 +15,8 @@ from extendedLBPH_train import *
 track_box = [0,0,0,0]
 
 feed = False
+track_flag = False
+
 
 app = Flask(__name__)
 
@@ -25,6 +27,8 @@ app.config['MAIL_PASSWORD'] = 'homevisionGP21'
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 mail = Mail(app)
+email = "engjimmy98@gmail.com"
+
 CORS(app, support_credentials=True)
 
 cameraIndx = 0
@@ -51,6 +55,7 @@ moduleProcess.start()
 
 def gen_frames(box = False):
     # camera = cv2.VideoCapture(cameraIndx)  
+    global feed
     while feed:
         
         frame = queue_from_cam.get()
@@ -316,8 +321,21 @@ def from_main():
         else:
             msgText = " Say hello to your friend {}".format(name)
 
-    msg = Message(mode.upper(), sender = 'homevisionapp@gmail.com', recipients = ['gellesh.arg@gmail.com'])
+    if mode == "face_obj":
+        name = request.args.get("name")
+        obj = request.args.get("")
+        msgText = " Look your object appeared with {} ...".format(name)
+    
+
+    global email
+    msg = Message(mode.upper(), sender = 'homevisionapp@gmail.com', recipients = [email])
     msg.body = msgText
+
+    if mode == "face_obj":
+        with app.open_resource('./frame.jpg') as fp:
+            # attach("File name", "Type", read file)
+            msg.attach("frame.jpg", 'application/octet-stream', fp.read())
+    
     mail.send(msg)
     return "dummy"
 
@@ -325,27 +343,34 @@ def from_main():
 def from_track():
 
     # x , y ,w ,h
-    x = int(request.args.get("x1"))
-    y = int(request.args.get("y1"))
+    global track_flag
 
-    w = int(request.args.get("w"))
+    if track_flag:
+        x = int(request.args.get("x1"))
+        y = int(request.args.get("y1"))
 
-    h = int(request.args.get("h"))
+        w = int(request.args.get("w"))
 
-    global track_box 
+        h = int(request.args.get("h"))
 
-    track_box = [ x ,y , w , h ] 
-    
-    # msg = Message('Hello', sender = 'homevisionapp@gmail.com', recipients = ['engjimmy98@gmail.com'])
+        global track_box 
+
+        track_box = [ x ,y , w , h ] 
+        
+        # msg = Message('Hello', sender = 'homevisionapp@gmail.com', recipients = ['engjimmy98@gmail.com'])
     # msg.body = "Hello Flask message sent from Flask-Mail"
     # mail.send(msg)
     return "dummy"
-track_flag = False
+
+
 @app.route('/track_flag',methods=['GET'])
-def track_flag():
+def track_flagg():
     global track_flag
 
+
     response = {'flag':track_flag}
+    print(response)
+
     return jsonify(response)
 
 @app.route('/track_flag_stop',methods=['GET'])
@@ -358,7 +383,7 @@ def track_flag_stop():
     track_box = [0,0,0,0]
     main_flask_queue.put({"closeTrack":True})
     return jsonify('success')
-email = "engjimmy98@gmail.com"
+
 @app.route('/change_mail',methods=['POST'])
 def changeEmail():
     global email
@@ -395,5 +420,8 @@ def setUseCase():
     useCaseEnabledFlag = payload.get("flag")
     useCaseFace = payload.get("face")
     useCaseItem = payload.get("item")
+    print(type (useCaseEnabledFlag))
+    main_flask_queue.put({"face_object" : useCaseEnabledFlag, "name":useCaseFace, "object":int(useCaseItem) })
+
     #print(useCaseEnabledFlag)
     return jsonify("")

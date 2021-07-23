@@ -1,3 +1,8 @@
+"""
+ MAIN FILE that open processes and communicate with API
+"""
+
+
 from os import sendfile
 from pickle import FALSE
 from flask.json import jsonify
@@ -11,7 +16,7 @@ import multiprocessing
 from trackerProcess import objectTrackerProcess
 from motionProcess import motionDetectorProcess
 from detectionProcess import objectDetectionProcess
-from detect_RecognizeProcess import FaceDetectionProcess
+from detect_RecognizeProcess import FaceDetectionProcess , FaceObjProcess
 import requests
 
 import cv2
@@ -25,14 +30,31 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
 
     liveFeed = False
 
+
+    # Face and object
+    send_face_obj = False
+    face_object = {"name":None, "object":None, "on_off":False}
+
+    faceObjProcessQueue = multiprocessing.Queue()
+    mainFaceObjProcessQueue = multiprocessing.Queue()
+
+    faceObjProcess = multiprocessing.Process(target=FaceObjProcess,args=(
+        faceObjProcessQueue,mainFaceObjProcessQueue))
+
+    faceObjProcess.start()
+
     # Face detection
     
-
     def most_common(lst):
         return max(set(lst), key=lst.count)
 
+    faceCoolDownPeriod = 10 # in seconds
+    resetFaceDetection = False
+    faceTimer = None
+    face_rego = False
+
     faces = []
-    faceVotes = 5
+    faceVotes = 3
     receiveFace = False   # face on / off   
     sentFace = False
 
@@ -44,9 +66,12 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
 
     faceProcess.start()
 
+
+   
+
     
     # object detection
-    
+
     sentObj = False
     detectionProcessQueue = multiprocessing.Queue()
     mainDetectionProcessQueue = multiprocessing.Queue()
@@ -79,7 +104,7 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
     
     
     recieveMotion = False # motion on / off
-    coolDownPeriod = 5 # in seconds
+    coolDownPeriod = 60 # in seconds
     resetMotionDetection = False
     startedTimer = False
     timer = None
@@ -113,37 +138,32 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
         
 
             try:
+                # messages taken from API 
                 msg = main_flask_queue.get_nowait()
 
                 if "settings" in msg:
                     print("setting changed")
                     receiveFace , recieveMotion= msg["settings"]
+                    face_rego = receiveFace
+                    faces = []
+
 
                 if "track" in msg:
                     receiveTracker = True
-                    print(msg)
                    
                     width = frame.shape[0]
                     height = frame.shape[1]
                     x1 , x2 = (float(msg["points"][0])) * height, (float(msg["points"][1])) * height
                     y1 , y2 = (float(msg["points"][2])) * width, (float(msg["points"][3])) * width
                 
-                    # x1 , x2 = 0.5 * width , 0.75 * width
-                    # y1 , y2 = 0.5 * height , 0.75 * height
-
-                    # print(x1,x2,y1,y2, " from back")
                     rect_box = [int(x1),int(y1),int(x2-x1),int(y2-y1)]
-                    print(rect_box)
-                    # print(rect_box)
-                    # print(" hereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+                
 
                 if "livefeed" in msg:
                     liveFeed = True
                     # send frame to flask
                     queue_from_cam.put(frame)
-
-               
-                    
+  
                 if "stopFeed" in msg:
                     liveFeed = False
             
@@ -160,14 +180,21 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
                 if "wantFrame" in msg:
                     flask_main_queue.put(frame)
 
+
+                if "face_object" in msg:
+                    print(msg)
+                    face_object["on_off"] = msg["face_object"]
+                    receiveFace = msg["face_object"]
+                    face_object["name"] = msg["name"]
+                    face_object["object"] = msg["object"]
+
             except:
                 if liveFeed == True:
                     queue_from_cam.put(frame)    
                 pass
 
             
-            # if liveFeed:
-                # queue_from_cam.put(frame)
+         
 
 
             trackerStatus = {
@@ -213,8 +240,9 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
                         else:
                             print(frameTracker["box"])
                             x1 , y1 , w , h = frameTracker["box"]
-                            requests.get("http://0.0.0.0:5000/from_track?x1={}&y1={}&w={}&h={}".
-                            format(x1,y1,w,h))
+                            if liveFeed:
+                                requests.get("http://0.0.0.0:5000/from_track?x1={}&y1={}&w={}&h={}".
+                                format(x1,y1,w,h))
 
                             cv2.imshow('tracking', frameTracker["frame"])
                             cv2.waitKey(1)
@@ -229,7 +257,6 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
             #         motion detection              #
             #########################################
             motionOccured = mainMotionProcessQueue.get()
-            #print(motionOccured)
             
             if not resetMotionDetection:
                 if motionOccured and recieveMotion:
@@ -237,7 +264,7 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
                     #integrate with the back
                     response = {"motion":True}
                     resp = requests.get(url = "http://0.0.0.0:5000/from_main?mode={}".format("motion"))
-                    print(resp.text)
+                    # print(resp.text)
                     resetMotionDetection = True
                     startedTimer = True
                     timer = time.time()
@@ -290,31 +317,75 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
 
             if receiveFace:
                 if not sentFace:
-                    mainFaceProcessQueue.put({"frame":frame})
+                    mainFaceProcessQueue.put({"frame":frame,"status":"face"})
                     sentFace = True
                 try:
                     result = faceProcessQueue.get_nowait()
 
+                    print(result)
                     if "found" in result:
-                        faces.append(result["faceName"])
+                        if result["found"]:
+                            if result["faceName"] == None:
+                                pass
+                            else:
+                                faces.append(result["faceName"])
 
                         sentFace = False
+                        print(faces)
                         if result["found"] and len(faces)==faceVotes:
                             most = most_common(faces)
                             faces = []
                             print(" most face detected is {}".format(most))
                             # send to user obj location in scene
-                            resp = requests.get(url ="http://0.0.0.0:5000/from_main?mode={}&name={}"
-                            .format("face",most))
+                            
+                            if not resetFaceDetection and face_rego:
+                                # send mail and start timer
+                                print("send mail to {} *******************************".format(most))
+                                resp = requests.get(url ="http://0.0.0.0:5000/from_main?mode={}&name={}"
+                                .format("face",most))
+                                faceTimer = time.time()
+                                resetFaceDetection = True
+                                
                             # cv2.imshow('detection', result["image"])
                             # cv2.waitKey(1)
+
+
+                            if face_object["on_off"] and face_object["name"] == most:
+                                if not send_face_obj :
+
+                                    mainFaceObjProcessQueue.put({"frame":frame,"class":face_object["object"]})
+                                    send_face_obj = True
+                                else:
+                                    try:
+                                        result = faceObjProcessQueue.get_nowait()
+                                        send_face_obj = False
+                                        if "found" in result:
+                                            if result["found"]:
+                                                # flask_main_queue.put({"frame":result["image"],"found":True})
+                                                print("object with face detected {}".format(most))
+                                                cv2.imwrite("frame.jpg", result["image"])
+                                                resp = requests.get(url ="http://0.0.0.0:5000/from_main?mode={}&name={}&obj={}"
+                                                .format("face_obj",most,face_object["object"]))
+                                                
+                                            else:
+                                                print("obj not founded with face {}".format(most))
+                                        
+                                    except:
+                                        pass
+                                        
+
+
                         elif not result["found"]:
                             print("calculate face votes")
                             # send to user obj location in scene 
 
                 except:
                         pass
-                
+
+
+            if(resetFaceDetection):
+                if(time.time() - faceTimer >= faceCoolDownPeriod):
+                    resetFaceDetection = False
                 
             
 
@@ -326,6 +397,7 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
     motionProcess.join()
     detectionProcess.join()
     faceProcess.join()
+    faceObjProcess.join()
     cap.release()
     cv2.destroyAllWindows()
     #integrationUtils.objectTrackerProcess()
