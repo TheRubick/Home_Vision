@@ -92,7 +92,7 @@ class Detect:
 
 
         # show timing information on YOLO
-        print("[INFO] YOLO took {:.6f} seconds".format(end - start))
+        # print("[INFO] YOLO took {:.6f} seconds".format(end - start))
 
 
         # initialize our lists of detected bounding boxes, confidences, and
@@ -175,20 +175,4 @@ class Detect:
 
 
 
-
-
-
-
-# obj = Detect()
-
-
-# test = "test4"
-# imageName = "images/{}.jpg".format(test) 
-# image = cv2.imread(imageName)
-# boxes , classes = obj.search_img(image)
-# print(boxes)
-# print(classes)
-
-# obj.draw_bounding_boxes(image, boxes ,classes ,show = True)
-# # print(obj.draw_bounding_boxes(image, boxes ,classes))
 

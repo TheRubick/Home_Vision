@@ -93,7 +93,7 @@ class Face_Detection:
 
 
         # show timing information on YOLO
-        print("[INFO] YOLO took {:.6f} seconds".format(end - start))
+        # print("[INFO] YOLO took {:.6f} seconds".format(end - start))
 
 
         # initialize our lists of detected bounding boxes, confidences, and
@@ -178,7 +178,7 @@ class Face_Detection:
         to cut faces from images 
         """
         imgs = []
-        print(image.shape)
+        # print(image.shape)
         for box in self.boxes:
             part = image[box[1] : box[1] + box [3], box[0]: box[0] + box [2],:]
             if len(part) == 0:
@@ -190,25 +190,4 @@ class Face_Detection:
         return imgs
 
 
-
-# obj = Face_Detection()
-
-
-# test = "test4"
-# imageName = "images/{}.jpg".format(test) 
-# image = cv2.imread(imageName)
-# obj.search_img(image)
-
-# if obj.found:
-#     print(obj.boxes)
-#     print(obj.classes)
-#     # obj.draw_bounding_boxes(image,show = True)
-#     imgs = obj.get_faces(image)
-   
-    
-#     for img in imgs:
-#         # print(img)
-#         cv2.imshow("Image", img)
-#         cv2.waitKey(0)
-# print(obj.draw_bounding_boxes(image, boxes ,classes))
 

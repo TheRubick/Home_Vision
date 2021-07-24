@@ -31,11 +31,9 @@ def draw_boundingbox(event, x, y,flags,param):
 
 def objectTrackerProcess(trackerProcessQueue,mainProcessQueue,ix, iy, frameWidth, frameHeight, w, h):
     
-    selectingObject = False
     initTracking = True
     onTracking = False
     
-    inteval = 1
     duration = 0.01
     tracker = kcftracker.KCFTracker(True, True, True)  # hog, fixed_window, multiscale
     # if you use hog feature, there will be a short pause after you draw a first boundingbox, that is due to the use of Numba.
@@ -86,8 +84,8 @@ def objectTrackerProcess(trackerProcessQueue,mainProcessQueue,ix, iy, frameWidth
 
             
             if((cx > frameWidth or cx < 0) or (cy > frameHeight or cy < 0)):
-                print("cx = ",cx," cy = ",cy)
-                print("height = ",frameHeight," width = frameWidth")
+                # print("cx = ",cx," cy = ",cy)
+                # print("height = ",frameHeight," width = frameWidth")
                 trackerResp["resp"] = True
 
             trackerProcessQueue.put(trackerResp)

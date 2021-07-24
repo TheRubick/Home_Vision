@@ -30,5 +30,5 @@ def motionDetectorProcess(motionObj,fps,windowSize,motionProcessQueue,mainMotion
         motionObj.count += 1
         motionObj.count %= fps-1
         #print(gray_frame)
-        cv2.imshow("gray mask",fgmask)
-        cv2.waitKey(1)
+        # cv2.imshow("gray mask",fgmask)
+        # cv2.waitKey(1)

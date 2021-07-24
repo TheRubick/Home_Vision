@@ -17,7 +17,7 @@ def objectDetectionProcess(detectionProcessQueue,mainProcessQueue):
         obj.search_img(image)
         box = []
         classes = []
-        print(obj.classes)
+        # print(obj.classes)
         if len(obj.classes) > 0:
             # some objects founded 
             if label in obj.classes:

@@ -9,9 +9,6 @@ parentdir = os.path.dirname(currentdir)
 directory = os.path.join(parentdir,"BackendIntegration")
 
 
-# directory = os.path.join(parentdir,"BackendIntegration")
-# sys.path.insert(0, directory)
-
 
 def FaceDetectionProcess(faceProcessQueue,mainFaceProcessQueue):
     obj = Face_Detection(yolo=os.path.join(directory,"yolov4-tiny"))
@@ -33,7 +30,7 @@ def FaceDetectionProcess(faceProcessQueue,mainFaceProcessQueue):
                 for img in imgs:
                     if img.shape[0] > 5 and img.shape[1] > 5:
                         faceName = recognise_face(img)
-                        print(faceName , " during voting")
+                        # print(faceName , " during voting")
                         # cv2.imshow('face detection', img)
                         # cv2.waitKey(1)
 
@@ -58,7 +55,6 @@ def FaceObjProcess(faceObjProcessQueue,mainFaceObjProcessQueue):
         objD.search_img(image)
         box = []
         classes = []
-        print("in face _ object Mode  *****************************************")
         if len(objD.classes) > 0:
             # some objects founded 
             if label in objD.classes:

@@ -121,16 +121,18 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
     
     #starting the child processes
     motionProcess.start()
-    
+
+    frameNumber = 0
+    skipframe = 0
+    toSkip = 1
     while True:
         # flask_main_queue.put("from main hahahahaha")
+        
     
 
 
         ret,frame = cap.read()
         if ret == True:
-
-           
             
             #initiating motion detection and the object tracking processes with their queues
             #joining the child processes
@@ -162,8 +164,10 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
                 if "livefeed" in msg:
                     liveFeed = True
                     # send frame to flask
-                    queue_from_cam.put(frame)
-  
+                    # print("generate frame {}".format(frameNumber))
+                    queue_from_cam.put({"frame":frame,"num":frameNumber})
+                    frameNumber += 1
+                    
                 if "stopFeed" in msg:
                     liveFeed = False
             
@@ -182,7 +186,7 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
 
 
                 if "face_object" in msg:
-                    print(msg)
+                    # print(msg)
                     face_object["on_off"] = msg["face_object"]
                     receiveFace = msg["face_object"]
                     face_object["name"] = msg["name"]
@@ -190,10 +194,15 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
 
             except:
                 if liveFeed == True:
-                    queue_from_cam.put(frame)    
+                    # queue_from_cam.put(frame) 
+                    if skipframe == toSkip:
+                        # print("generate frame {}".format(frameNumber))
+                        queue_from_cam.put({"frame":frame,"num":frameNumber})
+                        frameNumber += 1   
+                        skipframe = 0
+                    else:
+                        skipframe += 1
                 pass
-
-            
          
 
 
@@ -238,7 +247,7 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
                             requests.get(url="http://0.0.0.0:5000/stop_feed")
                             liveFeed = False
                         else:
-                            print(frameTracker["box"])
+                            # print(frameTracker["box"])
                             x1 , y1 , w , h = frameTracker["box"]
                             if liveFeed:
                                 requests.get("http://0.0.0.0:5000/from_track?x1={}&y1={}&w={}&h={}".
@@ -295,7 +304,7 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
                     if "found" in result:
                         sentObj = False
                         if result["found"]:
-                            # print("obj founded")
+                            print("obj founded")
                             # send to user obj location in scene
                             flask_main_queue.put({"frame":result["image"],"found":True})
                             cv2.imshow('detection', result["image"])
@@ -322,7 +331,6 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
                 try:
                     result = faceProcessQueue.get_nowait()
 
-                    print(result)
                     if "found" in result:
                         if result["found"]:
                             if result["faceName"] == None:
@@ -340,7 +348,6 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
                             
                             if not resetFaceDetection and face_rego:
                                 # send mail and start timer
-                                print("send mail to {} *******************************".format(most))
                                 resp = requests.get(url ="http://0.0.0.0:5000/from_main?mode={}&name={}"
                                 .format("face",most))
                                 faceTimer = time.time()
@@ -376,11 +383,11 @@ def modulesProcess(flask_main_queue,main_flask_queue, queue_from_cam):
 
 
                         elif not result["found"]:
-                            print("calculate face votes")
+                            # print("calculate face votes")
                             # send to user obj location in scene 
-
+                            pass
                 except:
-                        pass
+                    pass
 
 
             if(resetFaceDetection):

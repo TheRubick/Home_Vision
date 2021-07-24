@@ -58,7 +58,9 @@ def gen_frames(box = False):
     global feed
     while feed:
         
-        frame = queue_from_cam.get()
+        obj = queue_from_cam.get()
+        frame = obj["frame"]
+        # print("recieve frame number ",obj["num"])
         if box:
             x , y = track_box[:2]
             w =  track_box[2]
@@ -68,7 +70,6 @@ def gen_frames(box = False):
 
         ret, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
-
         yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
@@ -117,7 +118,7 @@ def track_object():
 @app.route('/track_coords',methods=['POST'])
 def take_track_coords():
     coords = request.get_json()
-    print(coords, " from front")
+    # print(coords, " from front")
     global track_flag
     track_flag = True
     x1 = coords.get('x1')
@@ -233,7 +234,7 @@ def cancel_faces():
     person_faces=[]
     person_name=''
     res=""
-    print("caaancceeeellll")
+    print("cancel")
     return Response(res)
 
 @app.route('/save_name',methods=['POST'])
@@ -300,7 +301,6 @@ def delete_face():
     writeLabelsToFile(fileName='labels2.txt',l=labels2)
     return jsonify("")
 
-print("aloooo")
 
 @app.route('/from_main',methods=['GET'])
 def from_main():
@@ -358,9 +358,6 @@ def from_track():
 
         track_box = [ x ,y , w , h ] 
         
-        # msg = Message('Hello', sender = 'homevisionapp@gmail.com', recipients = ['engjimmy98@gmail.com'])
-    # msg.body = "Hello Flask message sent from Flask-Mail"
-    # mail.send(msg)
     return "dummy"
 
 
@@ -370,7 +367,6 @@ def track_flagg():
 
 
     response = {'flag':track_flag}
-    print(response)
 
     return jsonify(response)
 
@@ -421,8 +417,6 @@ def setUseCase():
     useCaseEnabledFlag = payload.get("flag")
     useCaseFace = payload.get("face")
     useCaseItem = payload.get("item")
-    print(type (useCaseEnabledFlag))
     main_flask_queue.put({"face_object" : useCaseEnabledFlag, "name":useCaseFace, "object":int(useCaseItem) })
 
-    #print(useCaseEnabledFlag)
     return jsonify("")
