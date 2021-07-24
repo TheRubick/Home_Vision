@@ -1,3 +1,7 @@
+"""
+    Face detection and recognition process
+"""
+
 from Face_Detection import Face_Detection
 from detect import Detect
 from extendedLBPH_test import *

@@ -1,3 +1,8 @@
+"""
+    The backend server 
+"""
+
+
 from flask import Flask, json, request, jsonify, Response
 from flask_cors import CORS, cross_origin
 from flask_mail import Mail, Message
