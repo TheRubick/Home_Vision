@@ -40,7 +40,7 @@ if(__name__ == "__main__"):
 
     motionObj = motionDetector()
     fps = motionObj.getFPS(cap)
-    print("fps = ",fps)
+    # print("fps = ",fps)
     count = 0
     #outputVideo = cv2.VideoWriter('output.avi',cv2.VideoWriter_fourcc(*'XVID'), 20.0, (50,50))
     frameIdx = 0
@@ -79,7 +79,7 @@ if(__name__ == "__main__"):
             frameIdx += 1
             frameIdx %= motionObj.frameNumber
 
-            print(motionObj.frameChecker)
+            # print(motionObj.frameChecker)
 
         count += 1
         count %= fps-1
