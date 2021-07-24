@@ -4,20 +4,32 @@ import fhog
 # ffttools
 
 def fftd(img, backwards=False):
+    """
+    this function used to perform discrete fourier transform on the given input
+    """
     # shape of img can be (m,n), (m,n,1) or (m,n,2)
     # in my test, fft provided by numpy and scipy are slower than cv2.dft
     return cv2.dft(np.float32(img), flags=((cv2.DFT_INVERSE | cv2.DFT_SCALE) if backwards else cv2.DFT_COMPLEX_OUTPUT))   # 'flags =' is necessary!
 
 
 def real(img):
+    """
+    function to return the real part of complex variable
+    """
     return img[:, :, 0]
 
 
 def imag(img):
+    """
+    function to return the imaginary part of complex variable
+    """
     return img[:, :, 1]
 
 
 def complexMultiplication(a, b):
+    """
+    function to perform complex multiplication
+    """
     res = np.zeros(a.shape, a.dtype)
 
     res[:, :, 0] = a[:, :, 0] * b[:, :, 0] - a[:, :, 1] * b[:, :, 1]
@@ -26,6 +38,9 @@ def complexMultiplication(a, b):
 
 
 def complexDivision(a, b):
+    """
+    function to perform complex division
+    """
     res = np.zeros(a.shape, a.dtype)
     divisor = 1. / (b[:, :, 0]**2 + b[:, :, 1]**2)
 
@@ -35,6 +50,9 @@ def complexDivision(a, b):
 
 
 def rearrange(img):
+    """
+    function used to replace the quarters of the image on the image's diagonal
+    """
     # return np.fft.fftshift(img, axes=(0,1))
     assert(img.ndim == 2)
     img_ = np.zeros(img.shape, img.dtype)
@@ -83,6 +101,9 @@ def getBorder(original, limited):
 
 
 def subwindow(img, window, borderType=cv2.BORDER_CONSTANT):
+    """
+    function used to get the subwindow of the image
+    """
     cutWindow = [x for x in window]
     limit(cutWindow, [0, 0, img.shape[1], img.shape[0]])   # modify cutWindow
     assert(cutWindow[2] > 0 and cutWindow[3] > 0)
@@ -98,7 +119,7 @@ def subwindow(img, window, borderType=cv2.BORDER_CONSTANT):
 class KCFTracker:
     def __init__(self, hog=False, fixed_window=True, multiscale=False):
         """
-        
+        initializing the KCF tracker attributes       
         """
         self.lambdar = 0.0001
         self.padding = 2.5
@@ -115,9 +136,6 @@ class KCFTracker:
             self.cellSize = 1
             self.hogFeature = False
 
-        '''
-            multiscale leha 3elaqa bel box eno yt3'yr swa2 2rbt 
-        '''
         if(multiscale):
             self.templateSize = 96   # template size
             self.scaleStep = 1.05   # scale step for multi-scale estimation
@@ -129,20 +147,23 @@ class KCFTracker:
             self.templateSize = 1
             self.scaleStep = 1
 
-        self.modelTemplateSize = [0, 0]  # cv::Size, [width,height]  #[int,int]
-        self.roi = [0., 0., 0., 0.]  # cv::Rect2f, [x,y,width,height]  #[float,float,float,float]
-        self.targetPatchSize = [0, 0, 0]  # [int,int,int]
-        self.scale = 1.   # float
-        self.modelAlpha = None  # numpy.ndarray    (size_patch[0], size_patch[1], 2)
-        self.desiredResponse = None  # numpy.ndarray    (size_patch[0], size_patch[1], 2)
-        self.modelTemplate = None  # numpy.ndarray    raw: (size_patch[0], size_patch[1])   hog: (size_patch[2], size_patch[0]*size_patch[1])
-        self.hannInit = None  # numpy.ndarray    raw: (size_patch[0], size_patch[1])   hog: (size_patch[2], size_patch[0]*size_patch[1])
+        self.modelTemplateSize = [0, 0]
+        self.roi = [0., 0., 0., 0.]
+        self.targetPatchSize = [0, 0, 0]
+        self.scale = 1.
+        self.modelAlpha = None  
+        self.desiredResponse = None  
+        self.modelTemplate = None
+        self.hannInit = None
 
     def subPixelPeak(self, left, center, right):
-        divisor = 2 * center - right - left  # float
+        divisor = 2 * center - right - left
         return (0 if abs(divisor) < 1e-3 else 0.5 * (right - left) / divisor)
 
     def createHanningMats(self):
+        """
+        function to create hanning matrix
+        """
         hann2t, hann1t = np.ogrid[0:self.targetPatchSize[0], 0:self.targetPatchSize[1]]
 
         hann1t = 0.5 * (1 - np.cos(2 * np.pi * hann1t / (self.targetPatchSize[1] - 1)))
@@ -157,6 +178,9 @@ class KCFTracker:
         self.hannInit = self.hannInit.astype(np.float32)
 
     def createGaussianPeak(self, sizey, sizex):
+        """
+        function to create gaussian peak for the desired response
+        """
         cy, cx = sizey / 2, sizex / 2
         output_sigma = (np.sqrt(sizex * sizey) / self.padding) * self.output_sigma_factor
         mult = -0.5 / (output_sigma * output_sigma)
@@ -166,6 +190,9 @@ class KCFTracker:
         return fftd(res)
 
     def gaussianCorrelation(self,u,v):
+        """
+        function to retrieve the gaussian correlation of two variables
+        """
         if(self.hogFeature):
             uv = np.zeros((self.targetPatchSize[0], self.targetPatchSize[1]), np.float32)
             for i in range(self.targetPatchSize[2]):
@@ -191,6 +218,9 @@ class KCFTracker:
         return dUV
 
     def getFeatures(self, image, inithann, scale_adjust=1.0):
+        """
+        function to extract the features of the roi "region of interest" whether fhog or gray features
+        """
         extractedroi = [0, 0, 0, 0]  # [int,int,int,int]
         cx = self.roi[0] + self.roi[2] / 2  # float
         cy = self.roi[1] + self.roi[3] / 2  # float
@@ -199,8 +229,6 @@ class KCFTracker:
             padded_w = self.roi[2] * self.padding
             padded_h = self.roi[3] * self.padding
 
-            #bashof anhy el akbar fehom w b3d kda b3ml scale 3leh
-            #3shan a3ml set lel template size ely ha5od mno el features
             if(self.templateSize > 1):
                 if(padded_w >= padded_h):
                     self.scale = padded_w / float(self.templateSize)
@@ -220,7 +248,7 @@ class KCFTracker:
                 self.modelTemplateSize[0] = int(self.modelTemplateSize[0]) // 2 * 2
                 self.modelTemplateSize[1] = int(self.modelTemplateSize[1]) // 2 * 2
 
-        #hena bn7ded el features beta3t el extracted roi: el cx w el cy w el dimensions beta3tha
+        
         extractedroi[2] = int(scale_adjust * self.scale * self.modelTemplateSize[0])
         extractedroi[3] = int(scale_adjust * self.scale * self.modelTemplateSize[1])
         extractedroi[0] = int(cx - extractedroi[2] / 2)
@@ -228,7 +256,7 @@ class KCFTracker:
 
         #stretching the borders
         z = subwindow(image, extractedroi, cv2.BORDER_REPLICATE)
-        #hena 3aksna 3shan el [1] fel z.shape hwa el width w el [0] hwa el height
+        
         if(z.shape[1] != self.modelTemplateSize[0] or z.shape[0] != self.modelTemplateSize[1]):
             z = cv2.resize(z, tuple(self.modelTemplateSize))
 
@@ -238,22 +266,25 @@ class KCFTracker:
             mapp = fhog.normalizeAndTruncate(mapp, 0.2)
             mapp = fhog.PCAFeatureMaps(mapp)
             self.targetPatchSize = list(map(int, [mapp['sizeY'], mapp['sizeX'], mapp['numFeatures']]))
-            FeaturesMap = mapp['map'].reshape((self.targetPatchSize[0] * self.targetPatchSize[1], self.targetPatchSize[2])).T   # (targetPatchSize[2], targetPatchSize[0]*targetPatchSize[1])
+            FeaturesMap = mapp['map'].reshape((self.targetPatchSize[0] * self.targetPatchSize[1], self.targetPatchSize[2])).T
         else:
             if(z.ndim == 3 and z.shape[2] == 3):
-                FeaturesMap = cv2.cvtColor(z, cv2.COLOR_BGR2GRAY)   # z:(targetPatchSize[0], targetPatchSize[1], 3)  FeaturesMap:(targetPatchSize[0], targetPatchSize[1])   #np.int8  #0~255
+                FeaturesMap = cv2.cvtColor(z, cv2.COLOR_BGR2GRAY)
             elif(z.ndim == 2):
-                FeaturesMap = z  # (targetPatchSize[0], targetPatchSize[1]) #np.int8  #0~255
+                FeaturesMap = z
             FeaturesMap = FeaturesMap.astype(np.float32) / 255.0 - 0.5
             self.targetPatchSize = [z.shape[0], z.shape[1], 1]
 
         if(inithann):
-            self.createHanningMats()  # createHanningMats need targetPatchSize
+            self.createHanningMats()
 
         FeaturesMap = self.hannInit * FeaturesMap
         return FeaturesMap
 
     def detect(self, z, x):
+        """
+        function to detect the location of the bounding box
+        """
         k = fftd(self.gaussianCorrelation(x, z))
         res = real(fftd(complexMultiplication((k),self.modelAlpha), True))
 
@@ -273,13 +304,19 @@ class KCFTracker:
         return p, pv
 
     def train(self, x, train_interp_factor):
-        k = self.gaussianCorrelation(x, x) #define the maximum response ely byb2a 3'aleban el target position
+        """
+        function used to update the learning parameters "alpha"
+        """
+        k = self.gaussianCorrelation(x, x)
         alphaf = complexDivision(self.desiredResponse, fftd(k) + self.lambdar)
 
         self.modelTemplate = (1 - train_interp_factor) * self.modelTemplate + train_interp_factor * x
         self.modelAlpha = (1 - train_interp_factor) * self.modelAlpha + train_interp_factor * alphaf
 
     def init(self, roi, image):
+        """
+        this function is called only on the first frame
+        """
         self.roi = list(map(float, roi))
         assert(roi[2] > 0 and roi[3] > 0)
         self.modelTemplate = self.getFeatures(image, 1)
@@ -288,6 +325,9 @@ class KCFTracker:
         self.train(self.modelTemplate, 1.0)
 
     def update(self,image):
+        """
+        this function is used to update the frames after the first frame have been initialized
+        """
         if(self.roi[0] + self.roi[2] <= 0):
             self.roi[0] = -self.roi[2] + 1
         if(self.roi[1] + self.roi[3] <= 0):

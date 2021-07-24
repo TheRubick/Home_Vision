@@ -13,6 +13,9 @@ class motionDetector:
     
 
     def skipFrame(self, frames, cap):
+        """
+        function to determine how many frames to skip i.e. not taking them into consideration
+        """
         totalFrames = self.getFPS(cap)
         skip = totalFrames // frames    # 30 / 3 = 10  1 ..1 ..11 ..21 ..22 .. 30  ***  2    
         return skip
@@ -21,6 +24,9 @@ class motionDetector:
         return cap.get(cv2.CAP_PROP_FPS)
 
     def getNonZeroCount(self, frame, windowSize, threshold = 95):
+        """
+        function to decide if the current scene has detected motion or not
+        """
         nonZeroCount = np.count_nonzero(frame)
         min_threshold = (windowSize / 100) * threshold
         nb_pixels = windowSize
@@ -28,6 +34,9 @@ class motionDetector:
         return not(nb > min_threshold)
     
     def frameVote(self,frameChecker):
+        """
+        get the majority of the frames to decide if there is any motion in the scene or not
+        """
         return (np.count_nonzero(frameChecker) > self.frameNumber // 2)
 
 

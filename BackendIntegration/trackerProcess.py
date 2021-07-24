@@ -2,44 +2,17 @@ import cv2
 from time import time
 import kcftracker
 
-def draw_boundingbox(event, x, y,flags,param):
-    global selectingObject, initTracking, onTracking, ix, iy, cx, cy, w, h    
-    if event == cv2.EVENT_LBUTTONDOWN:
-        selectingObject = True
-        onTracking = False
-        ix, iy = x, y
-        cx, cy = x, y
-
-    elif event == cv2.EVENT_MOUSEMOVE:
-        cx, cy = x, y
-
-    elif event == cv2.EVENT_LBUTTONUP:
-        selectingObject = False
-        if(abs(x - ix) > 10 and abs(y - iy) > 10):
-            w, h = abs(x - ix), abs(y - iy)
-            ix, iy = min(x, ix), min(y, iy)
-            initTracking = True
-        else:
-            onTracking = False
-
-    elif event == cv2.EVENT_RBUTTONDOWN:
-        onTracking = False
-        if(w > 0):
-            ix, iy = x - w / 2, y - h / 2
-            initTracking = True
-
 
 def objectTrackerProcess(trackerProcessQueue,mainProcessQueue,ix, iy, frameWidth, frameHeight, w, h):
-    
+    """
+    function to handle the tracking process including the initial frame and its subsequence frames' updates
+    """
     initTracking = True
     onTracking = False
     
     duration = 0.01
     tracker = kcftracker.KCFTracker(True, True, True)  # hog, fixed_window, multiscale
-    # if you use hog feature, there will be a short pause after you draw a first boundingbox, that is due to the use of Numba.
-
-    #cv2.setMouseCallback('tracking', draw_boundingbox)
-
+    
     while True:
         trackerStatus = mainProcessQueue.get()
         frame = trackerStatus["frame"]
