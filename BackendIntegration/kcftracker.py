@@ -7,9 +7,8 @@ def fftd(img, backwards=False):
     """
     this function used to perform discrete fourier transform on the given input
     """
-    # shape of img can be (m,n), (m,n,1) or (m,n,2)
-    # in my test, fft provided by numpy and scipy are slower than cv2.dft
-    return cv2.dft(np.float32(img), flags=((cv2.DFT_INVERSE | cv2.DFT_SCALE) if backwards else cv2.DFT_COMPLEX_OUTPUT))   # 'flags =' is necessary!
+   
+    return cv2.dft(np.float32(img), flags=((cv2.DFT_INVERSE | cv2.DFT_SCALE) if backwards else cv2.DFT_COMPLEX_OUTPUT)) 
 
 
 def real(img):
@@ -73,11 +72,15 @@ def y2(rect):
 
 
 def limit(rect, limit):
-    if(rect[0] + rect[2] > limit[0] + limit[2]):
+    """
+    ensure that bounding box after padding is still contained  
+    rect is ROI   , limit ( 0,0,w,h)
+    """
+    if(rect[0] + rect[2] > limit[0] + limit[2]):  # remove extra postive padding 
         rect[2] = limit[0] + limit[2] - rect[0]
     if(rect[1] + rect[3] > limit[1] + limit[3]):
         rect[3] = limit[1] + limit[3] - rect[1]
-    if(rect[0] < limit[0]):
+    if(rect[0] < limit[0]):  # remove extra negative padding 
         rect[2] -= (limit[0] - rect[0])
         rect[0] = limit[0]
     if(rect[1] < limit[1]):
@@ -105,10 +108,10 @@ def subwindow(img, window, borderType=cv2.BORDER_CONSTANT):
     function used to get the subwindow of the image
     """
     cutWindow = [x for x in window]
-    limit(cutWindow, [0, 0, img.shape[1], img.shape[0]])   # modify cutWindow
+    limit(cutWindow, [0, 0, img.shape[1], img.shape[0]])  
     assert(cutWindow[2] > 0 and cutWindow[3] > 0)
     border = getBorder(window, cutWindow)
-    res = img[cutWindow[1]:cutWindow[1] + cutWindow[3], cutWindow[0]:cutWindow[0] + cutWindow[2]]
+    res = img[cutWindow[1]:cutWindow[1] + cutWindow[3], cutWindow[0]:cutWindow[0] + cutWindow[2]]  # get part from image surronded by bounding box
 
     if(border != [0, 0, 0, 0]):
         res = cv2.copyMakeBorder(res, border[1], border[3], border[0], border[2], borderType)
@@ -143,9 +146,7 @@ class KCFTracker:
         elif(fixed_window):
             self.templateSize = 96
             self.scaleStep = 1
-        else:
-            self.templateSize = 1
-            self.scaleStep = 1
+       
 
         self.modelTemplateSize = [0, 0]
         self.roi = [0., 0., 0., 0.]
@@ -166,6 +167,8 @@ class KCFTracker:
         """
         hann2t, hann1t = np.ogrid[0:self.targetPatchSize[0], 0:self.targetPatchSize[1]]
 
+        # create 2 cosine wave for create hanning window 
+
         hann1t = 0.5 * (1 - np.cos(2 * np.pi * hann1t / (self.targetPatchSize[1] - 1)))
         hann2t = 0.5 * (1 - np.cos(2 * np.pi * hann2t / (self.targetPatchSize[0] - 1)))
         hann2d = hann2t * hann1t
@@ -180,6 +183,7 @@ class KCFTracker:
     def createGaussianPeak(self, sizey, sizex):
         """
         function to create gaussian peak for the desired response
+        f(x) = 1 / simga sqrt(2PI) * exp(-0.5/simga^2 * (x-mean)^2)
         """
         cy, cx = sizey / 2, sizex / 2
         output_sigma = (np.sqrt(sizex * sizey) / self.padding) * self.output_sigma_factor
@@ -221,7 +225,7 @@ class KCFTracker:
         """
         function to extract the features of the roi "region of interest" whether fhog or gray features
         """
-        extractedroi = [0, 0, 0, 0]  # [int,int,int,int]
+        extractedroi = [0, 0, 0, 0]  
         cx = self.roi[0] + self.roi[2] / 2  # float
         cy = self.roi[1] + self.roi[3] / 2  # float
 
@@ -236,18 +240,12 @@ class KCFTracker:
                     self.scale = padded_h / float(self.templateSize)
                 self.modelTemplateSize[0] = int(padded_w / self.scale)
                 self.modelTemplateSize[1] = int(padded_h / self.scale)
-            else:
-                self.modelTemplateSize[0] = int(padded_w)
-                self.modelTemplateSize[1] = int(padded_h)
-                self.scale = 1.
+          
 
             if(self.hogFeature):
-                self.modelTemplateSize[0] = int(self.modelTemplateSize[0]) // (2 * self.cellSize) * 2 * self.cellSize + 2 * self.cellSize
-                self.modelTemplateSize[1] = int(self.modelTemplateSize[1]) // (2 * self.cellSize) * 2 * self.cellSize + 2 * self.cellSize
-            else:
-                self.modelTemplateSize[0] = int(self.modelTemplateSize[0]) // 2 * 2
-                self.modelTemplateSize[1] = int(self.modelTemplateSize[1]) // 2 * 2
-
+                self.modelTemplateSize[0] = int(self.modelTemplateSize[0]) + 2 * self.cellSize
+                self.modelTemplateSize[1] = int(self.modelTemplateSize[1]) + 2 * self.cellSize
+    
         
         extractedroi[2] = int(scale_adjust * self.scale * self.modelTemplateSize[0])
         extractedroi[3] = int(scale_adjust * self.scale * self.modelTemplateSize[1])
@@ -262,9 +260,9 @@ class KCFTracker:
 
         if(self.hogFeature):
             mapp = {'sizeX': 0, 'sizeY': 0, 'numFeatures': 0, 'map': 0}
-            mapp = fhog.getFeatureMaps(z, self.cellSize, mapp)
+            mapp = fhog.getFeatureMaps(z, self.cellSize, mapp) # calculate histogram of gradient for every cell we get 9 bins 
             mapp = fhog.normalizeAndTruncate(mapp, 0.2)
-            mapp = fhog.PCAFeatureMaps(mapp)
+            mapp = fhog.PCAFeatureMaps(mapp)  # 2 steps used to reduce number of features from 36 to 13 feature
             self.targetPatchSize = list(map(int, [mapp['sizeY'], mapp['sizeX'], mapp['numFeatures']]))
             FeaturesMap = mapp['map'].reshape((self.targetPatchSize[0] * self.targetPatchSize[1], self.targetPatchSize[2])).T
         else:
@@ -285,21 +283,24 @@ class KCFTracker:
         """
         function to detect the location of the bounding box
         """
-        k = fftd(self.gaussianCorrelation(x, z))
+        k = fftd(self.gaussianCorrelation(x, z)) # corrleation between prev batch and current batch
         res = real(fftd(complexMultiplication((k),self.modelAlpha), True))
 
-        _, pv, _, pi = cv2.minMaxLoc(res)   # pv:float  pi:tuple of int
-        p = [float(pi[0]), float(pi[1])]   # cv::Point2f, [x,y]  #[float,float]
+        _, pv, _, pi = cv2.minMaxLoc(res)   # pv -> max val   pi ->  pos of max val
+        p = [float(pi[0]), float(pi[1])]  #  xy coord of maximum value
 
         
         if(pi[0] > 0 and pi[0] < res.shape[1] - 1):
+            # average value in case point is out boundry
             p[0] += self.subPixelPeak(res[pi[1], pi[0] - 1], pv, res[pi[1], pi[0] + 1])
         if(pi[1] > 0 and pi[1] < res.shape[0] - 1):
             p[1] += self.subPixelPeak(res[pi[1] - 1, pi[0]], pv, res[pi[1] + 1, pi[0]])
+
+
+        # get top left that will be added to the new point
         
-        
-        p[0] -= res.shape[1] / 2.
-        p[1] -= res.shape[0] / 2.
+        p[0] -= res.shape[1] / 2.0
+        p[1] -= res.shape[0] / 2.0
 
         return p, pv
 
@@ -358,6 +359,8 @@ class KCFTracker:
                 self.roi[2] *= self.scaleStep
                 self.roi[3] *= self.scaleStep
 
+        # move top left coordinate according to the max response
+
         self.roi[0] = cx - self.roi[2] / 2 + loc[0] * self.cellSize * self.scale
         self.roi[1] = cy - self.roi[3] / 2 + loc[1] * self.cellSize * self.scale
 
@@ -371,6 +374,7 @@ class KCFTracker:
             self.roi[1] = -self.roi[3] + 2
         assert(self.roi[2] > 0 and self.roi[3] > 0)
 
+        # get features and train for the next frame 
         features = self.getFeatures(image,0,1.0)
         self.train(features,self.interp_factor)
         return self.roi

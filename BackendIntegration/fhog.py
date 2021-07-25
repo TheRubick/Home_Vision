@@ -141,33 +141,18 @@ def getFeatureMaps(image, k, mapp):
     mapp['numFeatures'] = p
     mapp['map'] = np.zeros((mapp['sizeX'] * mapp['sizeY'] * mapp['numFeatures']), np.float32)
 
+    # apply horiz filter and vertical filter to get horizontal mag and vertical mag
     dx = cv2.filter2D(np.float32(image), -1, kernel)   # np.float32(...) is necessary
     dy = cv2.filter2D(np.float32(image), -1, kernel.T)
+    
 
     arg_vector = np.arange(NUM_SECTOR + 1).astype(np.float32) * np.pi / NUM_SECTOR # hena by3ml el bin histogram 0,20,..,180
     boundary_x = np.cos(arg_vector)
     boundary_y = np.sin(arg_vector)
 
-    '''
-    ### original implementation
-    r, alfa = func1(dx, dy, boundary_x, boundary_y, height, width, numChannels) #func1 without @jit  ### 
-
-    ### 40x speedup
-    magnitude = np.sqrt(dx**2 + dy**2)
-    r = np.max(magnitude, axis=2)
-    c = np.argmax(magnitude, axis=2)
-    idx = (np.arange(c.shape[0])[:,np.newaxis], np.arange(c.shape[1]), c)
-    x, y = dx[idx], dy[idx]
-
-    dotProd = x[:,:,np.newaxis] * boundary_x[np.newaxis,np.newaxis,:] + y[:,:,np.newaxis] * boundary_y[np.newaxis,np.newaxis,:]
-    dotProd = np.concatenate((dotProd, -dotProd), axis=2)
-    maxi = np.argmax(dotProd, axis=2)
-    alfa = np.dstack((maxi % NUM_SECTOR, maxi)) ###
-    '''
-    # 200x speedup
-    r, alfa = func1(dx, dy, boundary_x, boundary_y, height, width, numChannels)  # with @jit
-    # ~0.001s
-
+    
+    r, alfa = func1(dx, dy, boundary_x, boundary_y, height, width, numChannels) 
+    
     nearest = np.ones((k), np.int)
     nearest[0:k // 2] = -1
 
@@ -177,13 +162,8 @@ def getFeatureMaps(image, k, mapp):
     w[:, 0] = 1.0 / a_x * ((a_x * b_x) / (a_x + b_x))
     w[:, 1] = 1.0 / b_x * ((a_x * b_x) / (a_x + b_x))
 
-    '''
-    ### original implementation
-    mapp['map'] = func2(dx, dy, boundary_x, boundary_y, r, alfa, nearest, w, k, height, width, sizeX, sizeY, p, stringSize) #func2 without @jit  ###
-    '''
-    # 500x speedup
+   
     mapp['map'] = func2(dx, dy, boundary_x, boundary_y, r, alfa, nearest, w, k, height, width, sizeX, sizeY, p, stringSize)  # with @jit
-    # ~0.001s
 
     return mapp
 
@@ -196,52 +176,14 @@ def normalizeAndTruncate(mapp, alfa):
     xp = NUM_SECTOR * 3
     pp = NUM_SECTOR * 12
 
-    '''
-    ### original implementation
-    partOfNorm = np.zeros((sizeY*sizeX), np.float32)
-
-    for i in range(sizeX*sizeY):
-        pos = i * mapp['numFeatures']
-        partOfNorm[i] = np.sum(mapp['map'][pos:pos+p]**2) ###
-    '''
-    # 50x speedup
+   
     idx = np.arange(0, sizeX * sizeY * mapp['numFeatures'], mapp['numFeatures']).reshape((sizeX * sizeY, 1)) + np.arange(p)
-    partOfNorm = np.sum(mapp['map'][idx] ** 2, axis=1)  # ~0.0002s
+    partOfNorm = np.sum(mapp['map'][idx] ** 2, axis=1) 
 
     sizeX, sizeY = sizeX - 2, sizeY - 2
 
-    '''
-    ### original implementation
-    newData = func3(partOfNorm, mapp['map'], sizeX, sizeY, p, xp, pp) #func3 without @jit  ###
-    
-    ### 30x speedup
-    newData = np.zeros((sizeY*sizeX*pp), np.float32)
-    idx = (np.arange(1,sizeY+1)[:,np.newaxis] * (sizeX+2) + np.arange(1,sizeX+1)).reshape((sizeY*sizeX, 1))   # much faster than it's List Comprehension counterpart (see next line)
-    #idx = np.array([[i*(sizeX+2) + j] for i in range(1,sizeY+1) for j in range(1,sizeX+1)])
-    pos1 = idx * xp
-    pos2 = np.arange(sizeY*sizeX)[:,np.newaxis] * pp
-    
-    valOfNorm1 = np.sqrt(partOfNorm[idx] + partOfNorm[idx+1] + partOfNorm[idx+sizeX+2] + partOfNorm[idx+sizeX+2+1]) + FLT_EPSILON
-    valOfNorm2 = np.sqrt(partOfNorm[idx] + partOfNorm[idx+1] + partOfNorm[idx-sizeX-2] + partOfNorm[idx+sizeX-2+1]) + FLT_EPSILON
-    valOfNorm3 = np.sqrt(partOfNorm[idx] + partOfNorm[idx-1] + partOfNorm[idx+sizeX+2] + partOfNorm[idx+sizeX+2-1]) + FLT_EPSILON
-    valOfNorm4 = np.sqrt(partOfNorm[idx] + partOfNorm[idx-1] + partOfNorm[idx-sizeX-2] + partOfNorm[idx+sizeX-2-1]) + FLT_EPSILON
-
-    map1 = mapp['map'][pos1 + np.arange(p)]
-    map2 = mapp['map'][pos1 + np.arange(p,3*p)]
-
-    newData[pos2 + np.arange(p)] = map1 / valOfNorm1
-    newData[pos2 + np.arange(4*p,6*p)] = map2 / valOfNorm1
-    newData[pos2 + np.arange(p,2*p)] = map1 / valOfNorm2
-    newData[pos2 + np.arange(6*p,8*p)] = map2 / valOfNorm2
-    newData[pos2 + np.arange(2*p,3*p)] = map1 / valOfNorm3
-    newData[pos2 + np.arange(8*p,10*p)] = map2 / valOfNorm3
-    newData[pos2 + np.arange(3*p,4*p)] = map1 / valOfNorm4
-    newData[pos2 + np.arange(10*p,12*p)] = map2 / valOfNorm4 ###
-    '''
-    # 30x speedup
-    newData = func3(partOfNorm, mapp['map'], sizeX, sizeY, p, xp, pp)  # with @jit
-    ###
-
+   
+    newData = func3(partOfNorm, mapp['map'], sizeX, sizeY, p, xp, pp)  
     # truncation
     newData[newData > alfa] = alfa
 
@@ -265,42 +207,8 @@ def PCAFeatureMaps(mapp):
     nx = 1.0 / np.sqrt(xp * 2)
     ny = 1.0 / np.sqrt(yp)
 
-    '''
-    ### original implementation
-    newData = func4(mapp['map'], p, sizeX, sizeY, pp, yp, xp, nx, ny) #func without @jit  ###
-
-    ### 7.5x speedup
-    newData = np.zeros((sizeX*sizeY*pp), np.float32)
-    idx1 = np.arange(2*xp).reshape((2*xp, 1)) + np.arange(xp*yp, 3*xp*yp, 2*xp)
-    idx2 = np.arange(xp).reshape((xp, 1)) + np.arange(0, xp*yp, xp)
-    idx3 = np.arange(0, 2*xp*yp, 2*xp).reshape((yp, 1)) + np.arange(xp*yp, xp*yp+2*xp)
-
-    for i in range(sizeY):
-        for j in range(sizeX):
-            pos1 = (i*sizeX + j) * p
-            pos2 = (i*sizeX + j) * pp
-                        
-            newData[pos2 : pos2+2*xp] = np.sum(mapp['map'][pos1 + idx1], axis=1) * ny
-            newData[pos2+2*xp : pos2+3*xp] = np.sum(mapp['map'][pos1 + idx2], axis=1) * ny
-            newData[pos2+3*xp : pos2+3*xp+yp] = np.sum(mapp['map'][pos1 + idx3], axis=1) * nx ###
-
-    ### 120x speedup 
-    newData = np.zeros((sizeX*sizeY*pp), np.float32)
-    idx01 = (np.arange(0,sizeX*sizeY*pp,pp)[:,np.newaxis] + np.arange(2*xp)).reshape((sizeX*sizeY*2*xp))
-    idx02 = (np.arange(0,sizeX*sizeY*pp,pp)[:,np.newaxis] + np.arange(2*xp,3*xp)).reshape((sizeX*sizeY*xp))
-    idx03 = (np.arange(0,sizeX*sizeY*pp,pp)[:,np.newaxis] + np.arange(3*xp,3*xp+yp)).reshape((sizeX*sizeY*yp))
-
-    idx11 = (np.arange(0,sizeX*sizeY*p,p)[:,np.newaxis] + np.arange(2*xp)).reshape((sizeX*sizeY*2*xp, 1)) + np.arange(xp*yp, 3*xp*yp, 2*xp)
-    idx12 = (np.arange(0,sizeX*sizeY*p,p)[:,np.newaxis] + np.arange(xp)).reshape((sizeX*sizeY*xp, 1)) + np.arange(0, xp*yp, xp)
-    idx13 = (np.arange(0,sizeX*sizeY*p,p)[:,np.newaxis] + np.arange(0, 2*xp*yp, 2*xp)).reshape((sizeX*sizeY*yp, 1)) + np.arange(xp*yp, xp*yp+2*xp)
-
-    newData[idx01] = np.sum(mapp['map'][idx11], axis=1) * ny
-    newData[idx02] = np.sum(mapp['map'][idx12], axis=1) * ny
-    newData[idx03] = np.sum(mapp['map'][idx13], axis=1) * nx ###
-    '''
-    # 190x speedup
-    newData = func4(mapp['map'], p, sizeX, sizeY, pp, yp, xp, nx, ny)  # with @jit
-    ###
+   
+    newData = func4(mapp['map'], p, sizeX, sizeY, pp, yp, xp, nx, ny) 
 
     mapp['numFeatures'] = pp
     mapp['map'] = newData

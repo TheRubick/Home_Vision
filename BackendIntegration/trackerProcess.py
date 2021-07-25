@@ -10,7 +10,6 @@ def objectTrackerProcess(trackerProcessQueue,mainProcessQueue,ix, iy, frameWidth
     initTracking = True
     onTracking = False
     
-    duration = 0.01
     tracker = kcftracker.KCFTracker(True, True, True)  # hog, fixed_window, multiscale
     
     while True:
@@ -31,9 +30,7 @@ def objectTrackerProcess(trackerProcessQueue,mainProcessQueue,ix, iy, frameWidth
             trackerProcessQueue.put("go on")
 
         elif(onTracking):
-            t0 = time()
             boundingbox = tracker.update(frame)
-            t1 = time()
 
             boundingbox = list(map(int, boundingbox))
 
@@ -46,9 +43,7 @@ def objectTrackerProcess(trackerProcessQueue,mainProcessQueue,ix, iy, frameWidth
             #print(boundingbox)
             cv2.rectangle(frame, (boundingbox[0], boundingbox[1]), (boundingbox[0] + boundingbox[2], boundingbox[1] + boundingbox[3]), (255, 0, 0), 7)
 
-            duration = 0.8 * duration + 0.2 * (t1 - t0)
-            #duration = t1-t0
-            cv2.putText(frame, 'FPS: ' + str(1 / duration)[:4].strip('.'), (8, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+           
             trackerResp = {
                 "frame" : frame,
                 "resp" : False, 
